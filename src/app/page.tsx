@@ -41,6 +41,7 @@ const items = [
       "https://media.dodostatic.net/image/r:292x292/11EE7D610D2925109AB2E1C92CC5383C.jpg",
   },
 ];
+
 const cats =[
   {
     categoryID: 0,
@@ -81,7 +82,7 @@ const cats =[
     categoryID: 7,
     name: "Напитки",
     items:items
-  },
+  }
 ];
 
 
