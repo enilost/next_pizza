@@ -12,7 +12,7 @@ type SliderProps = {
   step: number;
   formatLabel?: (value: number) => string;
   value?: number[] | readonly number[];
-  onValueChange?: (values: number[]) => void;
+  onValueChange?: (values: [number,number]) => void;
 };
 
 const RangeCustom = React.forwardRef(
@@ -37,8 +37,8 @@ const RangeCustom = React.forwardRef(
       setLocalValues(Array.isArray(value) ? value : [min, max]);
     }, [min, max, value]);
 
-    const handleValueChange = (newValues: number[]) => {
-      console.log("handleValueChange", newValues);
+    const handleValueChange = (newValues: [number,number]) => {
+      // console.log("handleValueChange", newValues);
 
       setLocalValues(newValues);
       if (onValueChange) {
