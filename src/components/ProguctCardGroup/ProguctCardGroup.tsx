@@ -11,7 +11,7 @@ import { Title } from "../Title/Title";
 import ProductCard, { ProductCardProps } from "../ProductCard/ProductCard";
 import { useHash, useIntersection } from "react-use";
 import { useStoreCategory } from "@/store/category";
-import useSetAncor from "@/hooks/useSetAncor";
+// import useSetAncor from "@/hooks/useSetAncor";
 
 interface ProguctCardGroupProps {
   className?: string;

@@ -1,19 +1,12 @@
 "use client";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import {
-  FunctionComponent,
-  useDeferredValue,
-  useEffect,
-  useState,
-  useTransition,
-} from "react";
-import { Button } from "../ui/button";
+import { FunctionComponent } from "react";
+
 import { ArrowUpDown } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useHash, useLocation } from "react-use";
+
+import { useHash } from "react-use";
 import { useStoreCategory } from "@/store/category";
-// import { usePathname } from "next/navigation";
 
 interface CatigoriesProps {
   className?: string;
@@ -27,18 +20,12 @@ const Catigories: FunctionComponent<CatigoriesProps> = ({
   // activeIndex = 0,
 }) => {
   const [ancor, setAncor] = useHash();
-  //   console.log('useHash',ancor);
-  // const [activeIdx, setActiveIdx] = useState(activeIndex);
-  // const [is,trans]=useTransition()
-//  const Router = useRouter()
+
   const [activeCategoryId, setActiveCategoryId] = useStoreCategory((state) => [
     state.activeCategoryId,
     state.setActiveCategoryId,
   ]);
-  // useEffect(() => {
-  //   setActiveIdx(+ancor[ancor.length - 1]);
-  // }, [ancor]);
-  // useDeferredValue(ancor)
+
   return (
     <div
       className={cn(
@@ -55,28 +42,16 @@ const Catigories: FunctionComponent<CatigoriesProps> = ({
         {categories.map((el, idx) => {
           return (
             <Link
-              // href={`#${el.name + el.categoryID}`}
-              href={{hash:el.name}}
-              key={idx}
+              href={{ hash: el.name }}
+              key={idx+el.name}
               className={cn(
                 "flex items-center font-bold h-11 rounded-2xl px-5",
-                // activeIdx == idx &&
                 activeCategoryId == el.name &&
                   "bg-white shadow-md shadow-gray-200 text-primary"
               )}
-              // onClick={() => setActiveIdx(el.categoryID)}
-              onClick={() => {
-                // setTimeout(() => {
-                  
-                //   // setActiveCategoryId(el.categoryID.toString())
-                // }, 500);
-              }}
-
-              //   ;activeIndex = idx;return}}
             >
               <button>{el.name}</button>
             </Link>
-            // <div key={idx}>{el}</div>
           );
         })}
       </div>

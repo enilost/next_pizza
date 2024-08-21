@@ -1,7 +1,7 @@
 "use client";
-import { useRouter } from "next/navigation";
-import {  useCallback, useEffect, useRef, useState  } from "react";
-import { useHash } from "react-use";
+// import { useRouter } from "next/navigation";
+// import {  useCallback, useEffect, useRef, useState  } from "react";
+// import { useHash } from "react-use";
 
 interface useSetAncorProps {
   // intersection: IntersectionObserverEntry | null;
@@ -44,50 +44,59 @@ function useSetAncor(
   // }, [intersection, intersection?.isIntersecting]);
 
   // return {};
-  const firstRender = useRef(true)
-  const [getHash, setHash] = useState(() => window.location.hash);
-  const router = useRouter()
-  const hashChangeHandler = useCallback(() => {
-    setHash(window.location.hash);
-  }, []);
+  // const firstRender = useRef(true)
+  // const [getHash, setHash] = useState(() => window.location.hash || '');
+  // const router = useRouter()
+  // const hashChangeHandler = useCallback(() => {
+  //   if (typeof window === 'undefined')  return
 
-  useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false
-      return
-    }
-    window.addEventListener("hashchange", hashChangeHandler);
-    return () => {
-      window.removeEventListener("hashchange", hashChangeHandler);
-    };
-  }, []);
+  //   setHash(window.location.hash);
+  // }, []);
 
-  const updateHash = useCallback(
-    (newHash) => {
+  // useEffect(() => {
+  //   if (firstRender.current) {
+  //     firstRender.current = false
+  //     return
+  //   }
+  //   if (typeof window === 'undefined') {
+  //     return
+  //   }
+  //   window.addEventListener("hashchange", hashChangeHandler);
+  //   return () => {
+  //     window.removeEventListener("hashchange", hashChangeHandler);
+  //   };
+  // }, []);
 
-      console.log('document ',document.title);
-      console.log('window.location ',window.location);
+  // const updateHash = useCallback(
+  //   (newHash) => {
+  //     if (typeof window === 'undefined')  return
+  //     if (typeof document === 'undefined')  return
+     
+  //     console.log('document ',document.title);
+  //     console.log('window.location ',window.location);
       
-      if(newHash == '') {
-        console.log("newHash == ''");
-        const cleanedUrl = window.location.href.split('#')[0];
-        router.replace(cleanedUrl,{scroll:false})
-        // window.history.replaceState(null, '', cleanedUrl);
-        // const title = document.title +''
-        // window.history.replaceState(null, title, cleanedUrl) 
-        // document.title = title
-        // history.replaceState(null, '', ' ');
-      }
-      if (newHash !== getHash) {
-        // window.location.hash = newHash;
-        const cleanedUrl = window.location.href.split('#')[0] + `#${newHash}`;
-        router.replace(cleanedUrl,{scroll:false})
-      }
-    },
-    [getHash]
-  );
+  //     if(newHash == '') {
+  //       console.log("newHash == ''");
+  //       const cleanedUrl = window.location.href.split('#')[0];
+  //       router.replace(cleanedUrl,{scroll:false})
+  //       // window.history.replaceState(null, '', cleanedUrl);
+  //       // const title = document.title +''
+  //       // window.history.replaceState(null, title, cleanedUrl) 
+  //       // document.title = title
+  //       // history.replaceState(null, '', ' ');
+  //     }
+  //     if (newHash !== getHash) {
+  //       // window.location.hash = newHash;
+  //       const cleanedUrl = window.location.href.split('#')[0] + `#${newHash}`;
+  //       router.replace(cleanedUrl,{scroll:false})
+  //     }
+  //   },
+  //   [getHash]
+  // );
 
-  return [getHash, updateHash];
+  // return [getHash, updateHash];
+  return['ert',()=>{
+    console.log('setAncor');}]
 // };
 }
 

@@ -119,7 +119,7 @@ export default async function Home() {
               {/* {[...cats].m} */}
               {cats.map((el, idx) => {
                 return (
-                  <div>
+                  <div key={idx}>
                     <ProguctCardGroup
                       items={el.items} 
                       title={el.name}
