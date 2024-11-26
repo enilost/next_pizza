@@ -92,3 +92,62 @@ html {
 #nprogress .spinner-icon {
   @apply border-t-primary border-l-primary !important;
 }
+/* * {
+  border: 1px solid red;
+} */
+/* Для Firefox */
+.scrl_glbl {
+  /* scrollbar-color: hsl(var(--primary) / 0.2) transparent; */
+  /* scrollbar-width: thin; */
+}
+@-moz-document url-prefix() {
+  .scrl_glbl {
+    scrollbar-color: hsl(var(--primary) / 0.2) transparent;
+    scrollbar-width: thin;
+  }
+}
+/* Для hrome */
+.scrl_glbl::-webkit-scrollbar {
+  width: 0.75rem !important;
+  /* цвет фона полосы прокрутки */
+  background-color: transparent !important;
+}
+
+.scrl_glbl::-webkit-scrollbar-thumb {
+  /* цвет ползунка полосы прокрутки */
+  background-color: hsl(var(--primary) / 0.2) !important;
+  border-radius: 0.75rem !important;
+}
+
+.scrl_glbl::-webkit-scrollbar-thumb:hover {
+  /* цвет ползунка при наведении */
+  background-color: hsl(var(--primary)) !important;
+}
+
+.scrl_glbl::-webkit-scrollbar-track {
+  /* цвет трека полосы прокрутки */
+  background-color: transparent !important;
+  border-radius: 0.75rem !important;
+}
+
+/*  */
+.parentshadow::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  box-shadow: 0px 0px 5px 5px rgb(229 231 235 / var(--tw-bg-opacity));
+  z-index: 1;
+}
+.parentshadow::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  box-shadow: 0px 0px 5px 5px rgb(229 231 235 / var(--tw-bg-opacity));
+  z-index: 1;
+}

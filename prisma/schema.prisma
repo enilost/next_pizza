@@ -19,6 +19,7 @@ model User {
     email    String   @unique
     password String
     role     UserRole @default(USER)
+    verified DateTime // @default(now())
 
     provider   String?
     providerId String?
@@ -34,7 +35,7 @@ model User {
 model Product {
     id       Int    @id @default(autoincrement())
     name     String
-    imageURL String
+    imageUrl String
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -42,7 +43,7 @@ model Product {
     category   Category @relation(fields: [categoryId], references: [id])
     categoryId Int
 
-    Ingridients Ingridient[]
+    ingredients Ingredient[]
 
     items ProductItem[]
 }
@@ -64,7 +65,7 @@ model Category {
     products Product[]
 }
 
-model Ingridient {
+model Ingredient {
     id       Int    @id @default(autoincrement())
     name     String
     price    Int
@@ -95,8 +96,8 @@ model Cart {
 model CartItem {
     id Int @id @default(autoincrement())
 
-    productItem   ProductItem @relation(fields: [prodictItemId], references: [id])
-    prodictItemId Int
+    productItem   ProductItem @relation(fields: [productItemId], references: [id])
+    productItemId Int
 
     cart   Cart @relation(fields: [cartId], references: [id])
     cartId Int
@@ -104,7 +105,7 @@ model CartItem {
     quantity    Int
     // pizzaSize Int?
     // pizzaType Int?
-    ingridients Ingridient[]
+    ingredients Ingredient[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -147,8 +148,9 @@ model VerificationCode {
 
     // expiresAt DateTime @default(now())
     createdAt DateTime @default(now())
+
     // updatedAt DateTime @updatedAt
-    @@unique([userId,code])
+    @@unique([userId, code])
 }
 
 enum OrderStatus {

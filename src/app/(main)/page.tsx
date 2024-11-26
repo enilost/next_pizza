@@ -4,6 +4,9 @@ import Filters from "@/components/Filters/Filters";
 import ProguctCardGroup from "@/components/ProguctCardGroup/ProguctCardGroup";
 import { Title } from "@/components/Title/Title";
 import { cn } from "@/lib/utils";
+import { Suspense } from "react";
+import apiClient from "@/../services/apiClient";
+import prisma from "@/../../prisma/prisma-client";
 // import { Button } from "@/components/ui/button";
 
 // import Image from "next/image";
@@ -42,7 +45,7 @@ const items = [
   },
 ];
 
-const cats =[
+const cats2 =[
   {
     categoryID: 0,
     name: "Пиццы",
@@ -86,16 +89,21 @@ const cats =[
 ];
 
 
-let arr=[
-  {id:1},
-  {id:2},
-  {id:3},
-  {id:4},
-  {id:5}
-]
+
 
 export default async function Home() {
-
+  console.log('Home',process.env.NEXT_PUBLIC_API_URL);
+  const categories = await prisma.category.findMany({
+    include: {
+      products: {
+        include: {
+          ingredients: true,
+          items: true
+        }
+      }
+    }
+  });
+  
   return (
     <>
       <Container 
@@ -106,24 +114,26 @@ export default async function Home() {
         </Title>
 
         <Catigories 
-        categories={cats} 
+        categories={categories} 
         // activeIndex={0}
         ></Catigories>
 
         <div className={cn("flex gap-[100px] pb-14 mt-7")}>
           <div className="w-[250px]">
+            <Suspense>
             <Filters></Filters>
+            </Suspense>
           </div>
           <div className="flex-1">
             <div className="flex flex-col gap-16">
               {/* {[...cats].m} */}
-              {cats.map((el, idx) => {
+              {categories.map((el, idx) => {
                 return (
-                  <div key={idx}>
+                  <div key={el.id}>
                     <ProguctCardGroup
-                      items={el.items} 
+                      items={el.products} 
                       title={el.name}
-                      categoryId={el.categoryID}
+                      categoryId={el.id}
                     ></ProguctCardGroup>
                   </div>
                 );

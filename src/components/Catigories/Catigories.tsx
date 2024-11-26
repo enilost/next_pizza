@@ -10,7 +10,7 @@ import { useStoreCategory } from "@/store/category";
 
 interface CatigoriesProps {
   className?: string;
-  categories: { categoryID: number; name: string }[];
+  categories: { id: number; name: string }[];
   // activeIndex: number;
 }
 
@@ -19,8 +19,9 @@ const Catigories: FunctionComponent<CatigoriesProps> = ({
   categories = [],
   // activeIndex = 0,
 }) => {
-  const [ancor, setAncor] = useHash();
-
+  // const [ancor, setAncor] = useHash();
+  console.log(categories);
+  
   const [activeCategoryId, setActiveCategoryId] = useStoreCategory((state) => [
     state.activeCategoryId,
     state.setActiveCategoryId,

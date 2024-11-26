@@ -2,26 +2,32 @@
 import { cn } from "@/lib/utils";
 import {
   FunctionComponent,
-  useDeferredValue,
+
   useEffect,
   useRef,
-  useTransition,
+
 } from "react";
 import { Title } from "../Title/Title";
 import ProductCard, { ProductCardProps } from "../ProductCard/ProductCard";
-import { useHash, useIntersection } from "react-use";
+import {  useIntersection } from "react-use";
 import { useStoreCategory } from "@/store/category";
+import {  Ingredient, Product, ProductItem } from "@prisma/client";
 // import useSetAncor from "@/hooks/useSetAncor";
 
-interface ProguctCardGroupProps {
+interface ProductCardGroupProps {
   className?: string;
-  items: ProductCardProps[];
+  // items: ProductItem[];
+  items: ProductIngedientItem[];
   title: string;
   categoryId: number;
   listClassName?: string;
 }
 
-const ProguctCardGroup: FunctionComponent<ProguctCardGroupProps> = ({
+export interface ProductIngedientItem extends Product {
+  items: ProductItem[];
+  ingredients: Ingredient[];
+}
+const ProguctCardGroup: FunctionComponent<ProductCardGroupProps> = ({
   className,
   title,
   items,
@@ -40,65 +46,19 @@ const ProguctCardGroup: FunctionComponent<ProguctCardGroupProps> = ({
   const intersectionRefDelay = useRef<IntersectionObserverEntry>(null);
   //   @ts-ignore
   intersectionRefDelay.current = intersection;
-  const setActiveCategoryId = useStoreCategory((state) => state.setActiveCategoryId);
+  const setActiveCategoryId = useStoreCategory(
+    (state) => state.setActiveCategoryId
+  );
   // useSetAncor({intersection,ancorName:title + categoryId,ref:intersectionRef})
-    useEffect(() => {
-      console.log(title + categoryId);
+  useEffect(() => {
+    // console.log(title + categoryId);
 
-      if (intersection && intersection.isIntersecting) {
+    if (intersection && intersection.isIntersecting) {
+      setActiveCategoryId(title);
 
-          setActiveCategoryId(title);
+    }
+  }, [intersection, intersection?.isIntersecting]);
 
-      //   (async () => {
-      //     const newVal = intersection && intersection.isIntersecting;
-      //     await new Promise<void>((resolve, reject) => {
-      //       setTimeout(() => {
-      //         resolve();
-      //       }, 710);
-      //     });
-      //     let oldVal =
-      //       intersectionRefDelay.current &&
-      //       intersectionRefDelay.current.isIntersecting;
-      //     if (newVal && oldVal) {
-      //       console.log("setAncor", title + categoryId);
-      //       // setAncor(title + categoryId);
-      //     } else {
-      //       oldVal = false;
-      //     }
-      //   })();
-      }
-    }, [intersection, intersection?.isIntersecting]);
-
-  // const [getHash, updateHash] = useSetAncor();
-  //     useEffect(() => {
-  //     // console.log(title + categoryId);
-
-  //     if (intersection && intersection.isIntersecting) {
-  //         setActiveCategoryId(title + categoryId);
-
-  //       (async () => {
-  //         const newVal = intersection && intersection.isIntersecting;
-  //         await new Promise<void>((resolve, reject) => {
-  //           setTimeout(() => {
-  //             resolve();
-  //           }, 0);
-  //         });
-  //         let oldVal =
-  //           intersectionRefDelay.current &&
-  //           intersectionRefDelay.current.isIntersecting;
-  //         if (newVal && oldVal) {
-  //           console.log("setAncor", title + categoryId);
-  //           // setAncor(title + categoryId);
-  //           updateHash(title + categoryId);
-  //           if (title + categoryId=='Комбо1') {
-  //             updateHash('');
-  //           }
-  //         } else {
-  //           oldVal = false;
-  //         }
-  //       })();
-  //     }
-  //   }, [intersection, intersection?.isIntersecting]);
   return (
     <div
       className={cn(" relative", className)}
@@ -126,7 +86,18 @@ const ProguctCardGroup: FunctionComponent<ProguctCardGroupProps> = ({
         {items.map((el, idx) => {
           return (
             // <div className="" >
-            <ProductCard {...el} key={idx}></ProductCard>
+            <ProductCard
+              key={el.id}
+              id={el.id}
+              name={el.name}
+              // price={el.items[0].price}
+              price={(()=>{
+                const pricesArr = el.items.map((el)=>el.price)
+                const index = pricesArr.indexOf(Math.min(...pricesArr))
+                return el.items[index].price
+              })()}
+              imageUrl={el.imageUrl}
+            ></ProductCard>
             // </div>
           );
         })}

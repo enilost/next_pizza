@@ -7,35 +7,27 @@ import { cn } from "@/lib/utils";
 import { Title } from "../Title/Title";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { Ingredient } from "@prisma/client";
+import { Skeleton } from "../ui/skeleton";
+// import { sizeItem } from "../Filters/Filters";
 
 type Item = CheckboxCustomProps;
+type Item2 = { id: number; name: string; checked: boolean };
 interface CheckboxGroupCustomProps {
   title?: string;
-  items: Item[];
+  // items: Item[];
+  // items: ({ checked: boolean } & Ingredient)[] | sizeItem[];
+  items:  Item2[];
   defaultItems?: Item[];
   searchInputPlaceholder?: string;
   className?: string;
   visibleLimit?: number;
-  onChange?: (val: string[]) => void;
+  // onChange?: (val: string[]) => void;
+  onCheckedChange?: (val: boolean, id: number) => void;
   defaultValue?: string[];
+  loading?: boolean;
 }
-const ingridienst = [
-  "сырный соус",
-  "сырный соус",
-  "сырный соус",
-  "сырный соус",
-  "сырный соус",
-  "сырный соус",
-  "сырный соус",
-  "чеснок",
-  "соленые огурчики",
-  "сырный соус",
-  "чеснок",
-  "соленые огурчики",
-  "сырный соус",
-  "чеснок",
-  "соленые огурчики",
-];
+
 const CheckboxGroupCustom: FunctionComponent<CheckboxGroupCustomProps> = ({
   className,
   visibleLimit,
@@ -44,7 +36,8 @@ const CheckboxGroupCustom: FunctionComponent<CheckboxGroupCustomProps> = ({
   defaultItems,
   searchInputPlaceholder,
   defaultValue,
-  onChange,
+  onCheckedChange,
+  loading
 }) => {
   const [isShowAll, setIsShowAll] = useState(false);
   const [searchInputVal, setSearchInputVal] = useState("");
@@ -52,6 +45,28 @@ const CheckboxGroupCustom: FunctionComponent<CheckboxGroupCustomProps> = ({
   const showAll = () => {
     setIsShowAll(!isShowAll);
   };
+
+  if (loading) {
+    return (
+      <div className={className}>
+        {title && (
+          <Title size="h4" className="mb-5 font-bold mt-5">
+            {title}
+          </Title>
+        )}
+        <div
+          className={cn(
+            "flex flex-col gap-4 max-h-96 pr-2 overflow-auto scrollbar"
+          )}
+        >
+          {searchInputPlaceholder && <Skeleton  className="h-9 mb-1"></Skeleton>}
+          {Array.from({ length: visibleLimit||3 }).map((el, idx) => {
+            return (<Skeleton key={idx} className="h-5 mb-1"></Skeleton>)
+          })}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={className}>
       {title && (
@@ -78,9 +93,9 @@ const CheckboxGroupCustom: FunctionComponent<CheckboxGroupCustomProps> = ({
           "flex flex-col gap-4 max-h-96 pr-2 overflow-auto scrollbar"
         )}
       >
-        {ingridienst
+        {items
           .filter((el) =>
-            el
+            el.name
               .trim()
               .toLowerCase()
               .includes(searchInputVal.trim().toLowerCase())
@@ -91,13 +106,16 @@ const CheckboxGroupCustom: FunctionComponent<CheckboxGroupCustomProps> = ({
             }
             return (
               <CheckboxCustom
-                label={el}
-                value={idx + el}
-                key={idx + el}
+                label={el.name}
+                value={el.name}
+                key={el.id}
                 endAdornment
-                checked
-                onCheckedChange={(items) => {
-                  console.log(items);
+                checked={el.checked}
+                // value={el.checked}
+                onCheckedChange={(checked) => {
+                  if (typeof onCheckedChange == "function") {
+                    onCheckedChange(checked, el.id);
+                  }
                 }}
               />
             );
@@ -106,8 +124,11 @@ const CheckboxGroupCustom: FunctionComponent<CheckboxGroupCustomProps> = ({
         {/* {visibleNumber != undefined && isShowAll && <p onClick={showAll}>свернуть список</p>} */}
       </div>
       {visibleLimit != undefined &&
-        ingridienst.filter((el) =>
-          el.trim().toLowerCase().includes(searchInputVal.trim().toLowerCase())
+        items.filter((el) =>
+          el.name
+            .trim()
+            .toLowerCase()
+            .includes(searchInputVal.trim().toLowerCase())
         ).length > visibleLimit && (
           <div className="border-t border-t-neutral-100 mt-4 pt-3">
             <Button onClick={showAll} variant={"secondary"}>

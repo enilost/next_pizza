@@ -1,32 +1,43 @@
 import { cn } from "@/lib/utils";
-import { FunctionComponent } from "react";
+import { FunctionComponent, Suspense } from "react";
 import Container from "@/components/Container/Container";
-import { Input } from "../ui/input";
+// import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import Image from "next/image";
 import { ArrowRight, ShoppingCart, User } from "lucide-react";
+import HeaderSearch from "../HeaderSearch/HeaderSearch";
+import Link from "next/link";
+import HeaderCart from "../HeaderCart/HeaderCart";
+// import CartDrawer from "../CartDrawer/CartDrawer";
 interface HeaderProps {}
 
-const Header: FunctionComponent<HeaderProps> = () => {
+const Header: FunctionComponent<HeaderProps> = (props) => {
+  // console.log("Header", props);
+
   return (
-    <header className={cn("border border-b")}>
+    <header className={cn("border border-b border-x-0")}>
+      
       <Container>
         <div className={cn(" flex justify-between items-center py-8")}>
-          <div className={cn(" flex items-center gap-2")}>
-            <Image src="/logo.png" width={35} height={35} alt="Logo" />
-            <div>
-              <h1 className={cn(" text-2xl uppercase font-black")}>
-                NEXT pizza
-              </h1>
-              <p className={cn(" text-sm text-gray-400 leading-3")}>
-                {" "}
-                Вкусней уже некуда
-              </p>
+          <Link href={"/?price-to=14341&pizza-types=2"}>
+            <div className={cn(" flex items-center gap-2")}>
+              <Image src="/logo.png" width={35} height={35} alt="Logo" />
+              <div>
+                <h1 className={cn(" text-2xl uppercase font-black")}>
+                  NEXT pizza
+                </h1>
+                <p className={cn(" text-sm text-gray-400 leading-3")}>
+                  {" "}
+                  Вкусней уже некуда
+                </p>
+              </div>
             </div>
-          </div>
-          <div className={cn("flex-grow-1")}>
-            <Input type="search"></Input>
-          </div>
+          </Link>
+
+          <Suspense>
+            <HeaderSearch className="mx-10 flex-1"></HeaderSearch>
+          </Suspense>
+
           <div className={cn("flex items-center gap-2")}>
             <Button
               variant={"outline"}
@@ -35,17 +46,13 @@ const Header: FunctionComponent<HeaderProps> = () => {
               <User size={"22px"} />
               Войти
             </Button>
+
             <div>
-                <Button className={cn("group relative")}>
-                    <b>520 ₽</b>
-                    <span className={cn("h-full w-[1px] bg-white/30 mx-2")}></span>
-                    <div className={cn("flex items-center gap-1 transition duration-300 group-hover:opacity-0")}>
-                    <ShoppingCart className={cn("h-4 w-4 relative")}></ShoppingCart>
-                    <b>3</b>
-                    </div>
-                    <ArrowRight className="w-5 absolute right-5 transition duration-300 -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0" />
-                </Button>
+            {/* <Suspense> */}
+              <HeaderCart />
+              {/* </Suspense> */}
             </div>
+            
           </div>
         </div>
       </Container>

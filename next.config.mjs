@@ -7,7 +7,8 @@ const nextConfig = {
             protocol: 'https',
             hostname:'media.dodostatic.net'
         }]
-    }
+    },
+    reactStrictMode: false,
 };
 
 export default nextConfig;

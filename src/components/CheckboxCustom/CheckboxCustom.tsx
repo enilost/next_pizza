@@ -1,5 +1,5 @@
 // import React, { ButtonHTMLAttributes } from "react";
-import { FunctionComponent } from "react";
+import { FunctionComponent, useId } from "react";
 import { Checkbox } from "../ui/checkbox";
 
 export interface CheckboxCustomProps {
@@ -17,6 +17,7 @@ const CheckboxCustom:  FunctionComponent<CheckboxCustomProps> = ({
   onCheckedChange,
   checked,
 }) => {
+  const id = useId()
   return (
     <div className="flex items-center space-x-2">
       <Checkbox
@@ -24,10 +25,12 @@ const CheckboxCustom:  FunctionComponent<CheckboxCustomProps> = ({
         checked={checked}
         value={value}
         className="rounded-[8px] w-6 h-6 border-none bg-gray-100"
-        id={`checkbox-${String(value)}`}
+        // id={`checkbox-${String(value)}`}
+        id={`checkbox-${id}`}
       />
       <label
-        htmlFor={`checkbox-${String(value)}`}
+        // htmlFor={`checkbox-${String(value)}`}
+        htmlFor={`checkbox-${id}`}
         className="leading-none cursor-pointer flex-1"
       >
         {label}

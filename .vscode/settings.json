@@ -1,0 +1,5 @@
+{
+  "typescript.showTypeOnHover": true,
+  "typescript.showTypeOnHover.showType": "literal",
+  "typescript.hover.showType": "literal"
+}

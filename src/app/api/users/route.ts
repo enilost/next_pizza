@@ -8,19 +8,7 @@ export async function GET(params?:any) {
     return NextResponse.json(users)
 }
 
-// let userr = {
-//     "fullName": "Вася пупкин",
-//     "email": "wasia@user.ru",
-//     "password": "123123",
-//   }
-//   type user =  {
-//     id?: number;
-//     fullName: string;
-//     email: string;
-//     password: string;
-//     createdAt?: string;
-//     updatedAt?: string;
-// }
+
 export async function POST(req:NextRequest) {
     const body = await req.json();
     
@@ -28,8 +16,10 @@ export async function POST(req:NextRequest) {
       data: {
         fullName: body.fullName,
         email: body.email,
-        password: body.password
+        password: body.password,
+        verified: body.verified
       },
     })
+
     return NextResponse.json(user);
 }
