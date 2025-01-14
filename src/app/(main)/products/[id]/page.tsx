@@ -2,9 +2,7 @@ import { FunctionComponent } from "react";
 import prisma from "@/../../prisma/prisma-client";
 import { notFound } from "next/navigation";
 import Container from "@/components/Container/Container";
-import { cn } from "@/lib/utils";
-import { Title } from "@/components/Title/Title";
-import RadioCustom from "@/components/RadioCustom/RadioCustom";
+
 import ProductCardDetail from "@/components/ProductCardDetail/ProductCardDetail";
 import ScrollTopPage from "./scrolltoppage";
 
@@ -29,30 +27,10 @@ const ProductId: FunctionComponent<ProductIdProps> = async ({
     },
   });
 
-  // console.log("product", product);
   if (!product) {
     return notFound();
   }
   
-  // product.items.push({
-  //   id: 115,
-  //   price: 123,
-  //   size: 20,
-  //   pizzaType: null,
-  //   productId: 3,
-  // });
-  // product.items.push({
-  //   id: 111,
-  //   price: 123,
-  //   size: null,
-  //   pizzaType: 2,
-  //   productId: 3,
-  // });
-  // if (typeof window !== "undefined") {
-
-  //   window.scrollTo(0, 0);
-  //   window.scrollY = 0;
-  // }
   if (typeof window !== "undefined") {
     window.scrollTo(0, 1);
   }
@@ -88,7 +66,7 @@ const ProductId: FunctionComponent<ProductIdProps> = async ({
           `,
         }}
       />
-      {/* {script} */}
+
     </>
   );
 };

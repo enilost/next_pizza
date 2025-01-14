@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../../prisma/prisma-client";
-// import { RequestSignal, State } from "@/store/cart";
 import { ICart } from "../../../../services/cart";
-// import { log } from "console";
-import { Cart } from "@prisma/client";
+
 import { CartAndItemsArg } from "@/store/cart";
-// import { log } from "console";
 
 export async function GET(
   req: NextRequest,
@@ -70,7 +67,7 @@ export async function GET(
   // тогда он создает корзину с этим уникальным новым токеном
   // и возвращает корзину и токен
   const whileCart = async (token: string) => {
-    let limit = 0;
+    let limit = 0;// лимит цикла
     let whileCriterion = true;
     let returnCart: ICart | null = null;
     // let returnIsTotenFinded: boolean //= flagTokenFinded;

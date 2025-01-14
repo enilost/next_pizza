@@ -3,8 +3,9 @@ import { Cart } from "@prisma/client";
 
 import { create } from "zustand";
 import apiClient from "../../services/apiClient";
-import { devtools } from "zustand/middleware";
+import { devtools, persist } from "zustand/middleware";
 import { ICart } from "../../services/cart";
+import toast from "react-hot-toast";
 
 export type CartAndItemsArg = "find" | "create" | "findOrCreate";
 export interface State {
@@ -29,11 +30,74 @@ export interface State {
     items: State["cartItems"],
     signal?: AbortSignal
   ) => Promise<State["cart"] & { items: State["cartItems"] }>;
+  broadcastChannelSyncCart: (data: {
+    cart?: State["cart"];
+    cartItems?: State["cartItems"];
+    loading?: State["loading"];
+    isRequest?: State["isRequest"];
+    error?: State["error"];
+  }) => void;
 }
+
+//блок для синхронизации корзины между вкладками
+// проверка, поддерживается ли BroadcastChannel
+const isBroadcastSupported =
+  typeof window !== "undefined" && "BroadcastChannel" in window;
+// если BroadcastChannel поддерживается, то создается канал
+const cartChannel =
+  typeof window !== "undefined" && isBroadcastSupported
+    ? new BroadcastChannel("cart_sync")
+    : null;
+// если BroadcastChannel не поддерживается, то уведомление через локалсторадж
+const STORAGE_KEY_NAME = "broadcastNotSupportedPizza" as const;
+
+function synchronizeBrowserTab() {
+  if (typeof window === "undefined") return;
+
+  if (cartChannel) {
+    // если BroadcastChannel поддерживается
+    // то каждое изменение в стейте будет отправляться в канал
+    cartChannel.onmessage = (event: MessageEvent<State>) => {
+      useStoreCart.setState(event.data);
+    };
+  } else {
+    // если BroadcastChannel не поддерживается
+    // то создается переменная в локалсторадже
+    localStorage.getItem(STORAGE_KEY_NAME) == undefined &&
+      localStorage.setItem(STORAGE_KEY_NAME, "0");
+
+    // слушатель для фокуса на вкладке
+    const focusListener = (event: FocusEvent) => {
+      const conf = confirm(
+        "Корзина была изменена из другой вкладки браузера. Нажмите OK для перезагрузки страницы"
+      );
+      if (conf) {
+        window.location.reload();
+      }
+    };
+
+    const storageListener = (event: StorageEvent) => {
+      // console.log("storageListener - event", event);
+      window.removeEventListener("focus", focusListener);
+      if (event.key === STORAGE_KEY_NAME) {
+        window.addEventListener("focus", focusListener, { once: true });
+      }
+    };
+
+    window.addEventListener("storage", storageListener);
+
+    window.addEventListener("beforeunload", () => {
+      window.removeEventListener("focus", focusListener);
+      window.removeEventListener("storage", storageListener);
+    });
+  }
+}
+synchronizeBrowserTab();
 
 export let RequestSignal: AbortController | null = null;
 // let isRequest: boolean = false;
 export const useStoreCart = create<State>()(
+  // persist(
   devtools((set, get) => {
     return {
       cart: {},
@@ -41,8 +105,20 @@ export const useStoreCart = create<State>()(
       isRequest: false,
       error: false,
       cartItems: [],
-      addCartItem:  (item) => {
+      //для синхронизации корзины между вкладками
+      broadcastChannelSyncCart: (data) => {
+        // if (isBroadcastSupported) {
+        //   // alert('перезагрузите страницу, корзина изменилась')
+        //   return;
+        // }
+        if (cartChannel) {
+          cartChannel.postMessage(data);
+        }
+      },
+
+      addCartItem: (item) => {
         //добавить товар
+
         const getCart = get().cart;
         let idx = findItemIndex(item, get().cartItems);
 
@@ -78,12 +154,18 @@ export const useStoreCart = create<State>()(
             };
           });
         }
-        console.log("addCartItem", get().cartItems);
+        const notify = () =>
+          toast.success(
+            `${item.productItem.product.name} добавляется в корзину`
+          );
+        notify();
 
         get().sinhronizeCart();
       },
-      changeCount:  (index: number, count: number) => {
+      changeCount: (index: number, count: number) => {
         //  изменяем количество определенного товара
+        const prevCount = get().cartItems[index].quantity;
+        const productName = get().cartItems[index].productItem.product.name;
         set((state) => {
           let cartItems = [...get().cartItems];
           cartItems[index] = {
@@ -94,10 +176,15 @@ export const useStoreCart = create<State>()(
             cartItems: cartItems,
           };
         });
+        const action =
+          count > prevCount ? "добавляется в корзину" : "удаляется из корзины";
+        const notify = () => toast.success(`${productName} ${action}`);
+        notify();
         get().sinhronizeCart();
       },
-      deleteCartItem:  (index: number) => {
+      deleteCartItem: (index: number) => {
         //  удаляем определенный товар
+        const productName = get().cartItems[index].productItem.product.name;
         set((state) => {
           let cartItems = [...get().cartItems];
           cartItems.splice(index, 1);
@@ -105,7 +192,9 @@ export const useStoreCart = create<State>()(
             cartItems: cartItems,
           };
         });
-
+        const action = "удаляется из корзины";
+        const notify = () => toast.success(`${productName} ${action}`);
+        notify();
         get().sinhronizeCart();
       },
       fetchGetCartAndItems: async (flag) => {
@@ -118,6 +207,9 @@ export const useStoreCart = create<State>()(
           // const {items:items2, ...cart2} = cartAndItems
           return { cart, items };
         } catch (error) {
+          const notify = () =>
+            toast.error(`${"error store/cart.ts/fetchGetCartAndItems"}`);
+          notify();
           throw error;
         }
       },
@@ -135,12 +227,16 @@ export const useStoreCart = create<State>()(
           if (error instanceof Error) {
             set((state) => {
               return {
-                cart: {},
+                // cart: {},
                 items: [],
                 error: error.message,
               };
             });
+            const notify = () =>
+              toast.error(`${"error store/cart.ts/getCartAndItems"}`);
+            notify();
           }
+          throw error;
         }
       },
       fetchSetItems: async (items) => {
@@ -148,30 +244,52 @@ export const useStoreCart = create<State>()(
           const Response = await apiClient.setCartAndItems(items);
           return Response;
         } catch (error) {
+          const notify = () =>
+            toast.error(` ${"error store/cart.ts/fetchSetItems"}`);
+          notify();
           throw error;
         }
       },
       sinhronizeCart: async () => {
+        // console.log("синхронизация корзины");
+        // если корзина на бэке не создана, то создает ее
+
         // запускается после любого изменения стейта корзины
         // отправляет корзину на сервер
-        // в конце он сравнивает корзину стейта с корзиной бэка
+        // в конце он сравнивает корзину стейта с корзиной ответа бэка
 
         // если за время выполнения этой ф-и корзина стейта еще изменилась
         // функция запускается заново отправляя актуальную корзину
         // и так до тех пор, пока корзина бэка и стейта не синхронизируются
+
+        if (get().isRequest === false && get().loading === true) {
+          // чтоб при запуске рекурсии не происходил 1 лишний ререндер
+          // на другой вкладке при синхронизации вкладок через broadcastChannel
+        } else {
+          // во всех других случаях запускаем синхронизацию
+          get().broadcastChannelSyncCart({
+            // обновляю по broadcastChannel сразу весь стейт,
+            //  хотя можно было бы обновлять только нужные поля
+            cart: get().cart,
+            cartItems: get().cartItems,
+            loading: get().loading,
+            isRequest: get().isRequest,
+            error: get().error,
+          });
+        }
+
         if (get().isRequest === true) {
           return;
         }
-        set((state) => {
-          return {
-            isRequest: true,
-          };
-        });
+        set((state) => ({ isRequest: true }));
+        // get().broadcastChannelSyncCart({
+        //   isRequest: get().isRequest,
+        // });
+
         if (get().loading === false) {
-          set((state) => {
-            return {
-              loading: true,
-            };
+          set((state) => ({ loading: true }));
+          get().broadcastChannelSyncCart({
+            loading: get().loading,
           });
         }
 
@@ -181,7 +299,7 @@ export const useStoreCart = create<State>()(
             // || get().cartItems.some((item) => item.cartId === 0)
           ) {
             // если нет корзины на бэке или у любого итема cartId === 0
-            // знач на бэке не нашлась корзина по кукисам при открытии сайта и нужно ее создать
+            // значит на бэке не нашлась корзина по кукисам при открытии сайта и нужно ее создать
             // а потом всем итемам корзины присвоить cartId созданной корзины
 
             // сохранить итемы, тк при создании корзины они потруться
@@ -201,11 +319,14 @@ export const useStoreCart = create<State>()(
                 };
               });
             } else {
+              const notify = () =>
+                toast.error(`создать корзину не удалось, sinhronizeCart`);
+              notify();
               throw new Error("создать корзину не удалось, sinhronizeCart");
             }
           }
           const response = await get().fetchSetItems(get().cartItems);
-          console.log("sinhronizeCart response - ", response);
+          // console.log("sinhronizeCart response - ", response);
 
           const { items: fetchItems, ...fetchCart } = response;
 
@@ -225,7 +346,7 @@ export const useStoreCart = create<State>()(
             await get().sinhronizeCart();
           }
         } catch (error) {
-          console.log("sinhronizeCart error", error);
+          // console.log("sinhronizeCart error", error);
           if (error instanceof Error) {
             set((state) => {
               return {
@@ -234,28 +355,45 @@ export const useStoreCart = create<State>()(
                 cartItems: [],
               };
             });
+
+            const notify = () =>
+              toast.error(
+                `${error.message} \n ${"store/cart.ts/sinhronizeCart"}`
+              );
+            notify();
           }
         } finally {
-          console.log("sinhronizeCart finally ");
 
-          if (get().loading) {
-            set((state) => {
-              return {
-                loading: false,
-              };
-            });
-          }
-          if (get().isRequest === true) {
-            set((state) => {
-              return {
-                isRequest: false,
-              };
-            });
+          if (get().loading === true || get().isRequest === true) {
+            set((state) => ({ loading: false, isRequest: false }));
+            if (!isBroadcastSupported) {
+              // если нет поддержки broadcastChannel
+              // то изменяются поле в localStorage
+              // чтоб слшатель storage запустился и другие вкладки получили оповещение
+              const storageVal = localStorage.getItem(STORAGE_KEY_NAME) || "0";
+              if (storageVal) {
+                const newVal = +storageVal + 1;
+                localStorage.setItem(STORAGE_KEY_NAME, newVal.toString());
+              }
+            } else {
+              // если синхронизация вкладок по broadcastChannel
+              get().broadcastChannelSyncCart({
+                // обновляю по broadcastChannel сразу весь стейт,
+                //  хотя можно было бы обновлять только нужные поля
+                cart: get().cart,
+                cartItems: get().cartItems,
+                loading: get().loading,
+                isRequest: get().isRequest,
+                error: get().error,
+              });
+            }
           }
         }
       },
     };
   })
+  // { name: "cart" }
+  // )
 );
 
 // функция сравнения объектов без вложений
@@ -393,11 +531,11 @@ const findItemIndex = (
     let notUniqueIngredients = false;
     if (notUniqueItem) {
       // тк выше есть проверка на равность кол-ва ингредиентов
-      // то достаточно длинны только итема
+      // то достаточно длинны только итема === 0
       if (item.ingredients.length === 0) {
         return true;
       }
-      // массив ингредиентов итема
+      // массив id ингредиентов итема
       let itemIngrIds = item.ingredients.map((ingredient) => ingredient.id);
       // первый попавшийся ингредиент в картитеме
       // которого нет в ингредиентах итема

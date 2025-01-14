@@ -7,12 +7,7 @@ import { ProductIngedientItem } from "../ProguctCardGroup/ProguctCardGroup";
 import React from "react";
 import { Button } from "../ui/button";
 import Ingredient from "../Ingredient/Ingredient";
-import {
-  CartItem,
-  Ingredient as IngredientType,
-  Product,
-  ProductItem,
-} from "@prisma/client";
+import { Ingredient as IngredientType } from "@prisma/client";
 import {
   detailsTextIngredients,
   detailsTextSize,
@@ -21,6 +16,7 @@ import {
 } from "@/constants/constants";
 import { useStoreCart } from "@/store/cart";
 import { ICart } from "../../../services/cart";
+
 
 interface ProductCardDetailProps {
   product: ProductIngedientItem;
@@ -31,7 +27,7 @@ interface ProductCardDetailProps {
 const ProductCardDetail: FunctionComponent<ProductCardDetailProps> = ({
   product,
 }) => {
-  type mapType = {
+  type radioMapType = {
     // disabled: boolean;
     name: string;
     value: string;
@@ -43,14 +39,22 @@ const ProductCardDetail: FunctionComponent<ProductCardDetailProps> = ({
   };
 
   const fillRadiomap = () => {
-    const radioMapRes: Record<string, [mapType]> = {};
-    // uniquePizzaTypes.forEach((pizzaType) => {
+    // создает карту размеров продукта
+    // исходя из значения свойства pizzaType:1,2,null... это тип теста
+    // примерно так типТеста:[итемы с этим типом теста]
+    // { 
+    //  '1': [маленькая, средняя],
+    //  '2': [большая, средняя, маленькая],
+    //  'null': ['стандартная порция']... это не для пицц
+    // }
+    const radioMapRes: Record<string, [radioMapType]> = {};
     product.items.forEach((item) => {
       const keyStr = JSON.stringify(item.pizzaType);
       const el = {
         ...item,
-        // disabled: false,
-        name: SIZE_TYPES[JSON.stringify(item.size) as keyof typeof SIZE_TYPES] ?? SIZE_TYPES["error"],
+        name:
+          SIZE_TYPES[JSON.stringify(item.size) as keyof typeof SIZE_TYPES] ??
+          SIZE_TYPES["error"],
         value: JSON.stringify(item.size),
       };
       radioMapRes[keyStr] !== undefined && Array.isArray(radioMapRes[keyStr])
@@ -59,61 +63,63 @@ const ProductCardDetail: FunctionComponent<ProductCardDetailProps> = ({
     });
     return radioMapRes;
   };
-  //карта типов с маассивами string:[итемы]
+  //карта размеров продукта по pizzaType string:[итемы]
   const [radioMap, setRadioMap] = React.useState(fillRadiomap);
 
-  //массив с типами тонкое тесто и традиционное тесто
+  //массив с типами теста
   const [uniqueItemTypes, setUniqueItemTypes] = React.useState(
+    // на основании ключей radioMap делает массив для ряда кнопок выбора теста
+    // сколько типов было найденов в продукте, 
+    // столько кнопок выбора теста и появится
     Object.keys(radioMap).map((key, idx) => {
       return {
         id: idx,
-        disabled: false,
+        // disabled: false,
         name:
           PRODUCT_TYPES[key as keyof typeof PRODUCT_TYPES] === ""
             ? "Стандарт"
-            : PRODUCT_TYPES[key as keyof typeof PRODUCT_TYPES] ?? PRODUCT_TYPES["error"],
+            : PRODUCT_TYPES[key as keyof typeof PRODUCT_TYPES] ??
+              PRODUCT_TYPES["error"],
         value: key,
       };
     })
   );
-  //выбранный тип, служит для навигации по карте типов [key]
+
+  //выбранный тип теста, служит для навигации по карте типов [key]
+  // radioMap[selectedItemType] - это массив вариантов выбора размера
+  // с определенным типом теста, 
   const [selectedItemType, setSelectedItemType] = React.useState(
+    // по умолчанию выбран первый элемент из массива
     uniqueItemTypes[0].value
-    // uniqueItemTypes[0].id
   );
-  //выбранный итем
+  //выбранный размер продукта в соответствии с выбранным типом теста
   const [selectedItem, setSelectedItem] = React.useState(
+    // по умолчанию выбран первый элемент из массива
     radioMap[selectedItemType][0]
   );
+  // выбранные ингредиенты
   const [selectedIngredients, setSelectedIngredients] = React.useState<
     IngredientType[]
   >([]);
+  // добавляет выбранный вариант продукта в корзину стейта зустанд
   const addCartItem = useStoreCart((state) => state.addCartItem);
   useEffect(() => {
+    // при изменении выбранного типа теста,
+    // меняется выбранный размер продукта
+    // на первый в списке
     setSelectedItem(radioMap[selectedItemType][0]);
   }, [selectedItemType]);
 
   const addToCart = () => {
-    // const cartItem: Omit<ProductIngedientItem, "items"> & {
-    //   item: ProductItem;
-    // } = { ...product ,
-    //   item: selectedItem ,
-    //   ingredients: selectedIngredients
-    // };
     const cartItemStart = {
       id: 0,
-      productItemId: selectedItem.id, //selectedItem.id,
+      productItemId: selectedItem.id,
       cartId: 0,
       quantity: 1,
       createdAt: new Date().toString() as unknown as Date,
       updatedAt: new Date().toString() as unknown as Date,
-      // createdAt: "2024-08-21T21:58:35.633Z" as unknown as Date,
-      // updatedAt: "2024-08-21T21:58:35.633Z" as unknown as Date,
     };
-    // const cartItem: CartItem & {
-    //   productItem: ProductItem & { product: Product };
-    //   ingredients: IngredientType[];
-    // } = {
+
     const cartItem: ICart["items"][number] = {
       ...cartItemStart,
       productItem: {
@@ -133,16 +139,8 @@ const ProductCardDetail: FunctionComponent<ProductCardDetailProps> = ({
       },
       ingredients: selectedIngredients,
     };
-    // console.log("cartItem cartItem", cartItem);
-
-    // // @ts-ignore
-    // delete cartItem.items;
-    // // @ts-ignore
-    // delete cartItem.item.value;
-    // console.log("selectedItem selectedItem", selectedItem);
-    // console.log("product product", product);
-
     addCartItem(cartItem);
+    // тосыты (уведомления) вызываются в store/cart.ts/addCartItem
   };
 
   const details1 = detailsTextSize(selectedItem.size, selectedItem.pizzaType);
@@ -152,7 +150,7 @@ const ProductCardDetail: FunctionComponent<ProductCardDetailProps> = ({
   const pRef = React.useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     if (!pRef.current) return;
-    const rect = pRef.current?.children[0].getBoundingClientRect();
+    const rect = pRef.current.children[0].getBoundingClientRect();
     const pHeight = rect.height;
     if (details2.length > 0) {
       pRef.current.style.height = `${pHeight}px`;
@@ -164,6 +162,7 @@ const ProductCardDetail: FunctionComponent<ProductCardDetailProps> = ({
   return (
     <div className="flex flex-1  ">
       {/* justify-between */}
+      {/* <Toaster /> */}
       <div
         // className="relative"
         className={cn(
@@ -185,7 +184,8 @@ const ProductCardDetail: FunctionComponent<ProductCardDetailProps> = ({
             }
           )}
         />
-
+{/* если в pizzaType продукта нет null, то выводятся кружки с размерами
+можно переделать на основе количества размеров, а не на основе типа теста */}
         {!uniqueItemTypes.every((el) => el.value == "null") && (
           <>
             <div
@@ -232,7 +232,7 @@ const ProductCardDetail: FunctionComponent<ProductCardDetailProps> = ({
           <RadioCustom
             className="my-2"
             selectedValue={selectedItem.value + ""}
-            onClick={(value) => setSelectedItem(value as mapType)}
+            onClick={(value) => setSelectedItem(value as radioMapType)}
             items={radioMap[selectedItemType]}
           ></RadioCustom>
         )}

@@ -1,12 +1,9 @@
 "use client";
 import { FunctionComponent, useEffect } from "react";
-// import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight, ShoppingCart } from "lucide-react";
 import CartDrawer from "../CartDrawer/CartDrawer";
 import { useStoreCart } from "@/store/cart";
-// import { findOrCreateCart } from "../../../services/cart";
-// import apiClient from "../../../services/apiClient";
 
 interface HeaderCartProps {}
 
@@ -22,7 +19,7 @@ const HeaderCart: FunctionComponent<HeaderCartProps> = () => {
   }, []);
 
   return (
-    <CartDrawer items={items} disabled={loading}>
+    <CartDrawer items={items} disabled={loading} loading={loading}>
       <span
         // onClick={() => getCartAndItems()}
         className={cn(`inline-flex items-center justify-center 

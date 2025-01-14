@@ -1,7 +1,4 @@
-// "use client";
-// import { cn } from "@/lib/utils";
-import { FunctionComponent, useEffect, useId } from "react";
-// import { Sheet } from "../ui/sheet";
+import { FunctionComponent, useEffect, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -10,18 +7,19 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetFooter,
+  SheetClose,
 } from "@/components/ui/sheet";
 import Link from "next/link";
 import { Button } from "../ui/button";
-// import { Arrow } from "@radix-ui/react-popover";
-import { ArrowRight } from "lucide-react";
+
+import { ArrowRight, Loader2 } from "lucide-react";
 import CartDrawerItem from "../CartDrawerItem/CartDrawerItem";
-import { ProductIngedientItem } from "../ProguctCardGroup/ProguctCardGroup";
+
 import { useStoreCart } from "@/store/cart";
 import { CartItem, Ingredient, Product, ProductItem } from "@prisma/client";
 import { detailsTextIngredients, detailsTextSize } from "@/constants/constants";
-// import apiClient from "../../../services/apiClient";
-// import { useStoreCart } from "@/store/cart";
+// import toast from "react-hot-toast";
+
 interface CartDrawerProps {
   className?: string;
   children?: React.ReactNode;
@@ -30,6 +28,7 @@ interface CartDrawerProps {
     ingredients: Ingredient[];
   })[];
   disabled?: boolean;
+  loading?: boolean;
 }
 
 const CartDrawer: FunctionComponent<CartDrawerProps> = ({
@@ -37,14 +36,14 @@ const CartDrawer: FunctionComponent<CartDrawerProps> = ({
   children,
   items,
   disabled,
+  loading,
 }) => {
   const [changeCount, deleteCartItem] = useStoreCart((state) => [
     state.changeCount,
     state.deleteCartItem,
   ]);
-  useEffect(() => {
-    // console.log('CartDrawer');
-  });
+  const [open, setOpen] = useState(false);
+
   const countClick = (
     index: number,
     count: number,
@@ -54,19 +53,38 @@ const CartDrawer: FunctionComponent<CartDrawerProps> = ({
       case "Minus":
         if (items[index].quantity > 1) {
           changeCount(index, count - 1);
+          // тосты запускаются внутри стейта корзины зустанд
         }
         break;
       case "Plus":
         changeCount(index, count + 1);
+        // const notify = () => toast.success(`${items[index].productItem.product.name} добавляется в корзину`);
+        // notify();
+        // тосты запускаются внутри стейта корзины зустанд
         break;
       default:
         const a: never = operation;
     }
   };
-  // detailsTextSize
+  // useEffect(() => {
+  //   const handleStorage = (e: StorageEvent) => {
+  //     if (e.key === 'cart') {
+  //       const newState = JSON.parse(e.newValue || '{}');
+  //       useStoreCart.setState({
+  //         cart: newState.state.cart,
+  //         cartItems: newState.state.cartItems
+  //       });
+  //     }
+  //   };
+  
+  //   window.addEventListener('storage', handleStorage);
+  //   return () => window.removeEventListener('storage', handleStorage);
+  // }, []);
+  console.log('cartdrawer');
+  
   const totalCount = items.reduce((acc, item) => acc + item.quantity, 0);
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger>{children}</SheetTrigger>
       <SheetContent className="flex flex-col justify-between pb-0 bg-[#fef9f4]">
         <SheetHeader>
@@ -141,14 +159,29 @@ const CartDrawer: FunctionComponent<CartDrawerProps> = ({
               </span>
             </div>
 
-            <Link href={"/cart"}>
+            <Link
+              onClick={(e) => {
+                if (disabled || items.length == 0) {
+                  e.preventDefault();
+                } else {
+                  setOpen(false);
+                }
+              }}
+              href={"/cart"}
+            >
               <Button
                 type="submit"
                 className="w-full h-12 text-base"
-                disabled={disabled}
+                disabled={disabled || items.length == 0}
+                loading={loading}
               >
-                Оформить заказ
-                <ArrowRight className="w-5 h-5 ml-2" />
+                {items.length == 0 ? "Корзина пуста" : "Оформить заказ"}
+
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                ) : (
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                )}
               </Button>
             </Link>
           </div>

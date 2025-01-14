@@ -1,5 +1,5 @@
 "use client";
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useState ,memo} from "react";
 import CheckboxCustom, {
   CheckboxCustomProps,
 } from "../CheckboxCustom/CheckboxCustom";
@@ -27,7 +27,9 @@ interface CheckboxGroupCustomProps {
   defaultValue?: string[];
   loading?: boolean;
 }
-
+const MemoCheckboxCustom= memo(CheckboxCustom, (prevProps, nextProps) => {
+  return prevProps.checked == nextProps.checked;
+});
 const CheckboxGroupCustom: FunctionComponent<CheckboxGroupCustomProps> = ({
   className,
   visibleLimit,
@@ -105,7 +107,7 @@ const CheckboxGroupCustom: FunctionComponent<CheckboxGroupCustomProps> = ({
               return null;
             }
             return (
-              <CheckboxCustom
+              <MemoCheckboxCustom
                 label={el.name}
                 value={el.name}
                 key={el.id}

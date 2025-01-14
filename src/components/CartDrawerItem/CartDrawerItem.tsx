@@ -3,8 +3,7 @@ import { FunctionComponent } from "react";
 import CountButton from "../CountButton/CountButton";
 import { Trash2Icon } from "lucide-react";
 import { Ingredient } from "@prisma/client";
-import { detailsTextIngredients, detailsTextSize } from "@/constants/constants";
-// import { useStoreCart } from "@/store/cart";
+// import { memo } from "react";
 
 interface CartDrawerItemProps {
   style?: Record<string, string>;
@@ -39,7 +38,6 @@ const CartDrawerItem: FunctionComponent<CartDrawerItemProps> = ({
   textDetails,
   textIngredients,
 }) => {
-
   return (
     <div
       className={cn("flex bg-white rounded-lg p-5 gap-6", className)}

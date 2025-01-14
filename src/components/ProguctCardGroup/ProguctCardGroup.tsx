@@ -1,19 +1,13 @@
 "use client";
 import { cn } from "@/lib/utils";
-import {
-  FunctionComponent,
-
-  useEffect,
-  useRef,
-
-} from "react";
+import { FunctionComponent, memo, useEffect, useRef } from "react";
 import { Title } from "../Title/Title";
-import ProductCard, { ProductCardProps } from "../ProductCard/ProductCard";
-import {  useIntersection } from "react-use";
+import ProductCard from "../ProductCard/ProductCard";
+import { useIntersection } from "react-use";
 import { useStoreCategory } from "@/store/category";
-import {  Ingredient, Product, ProductItem } from "@prisma/client";
-// import useSetAncor from "@/hooks/useSetAncor";
-
+import { Ingredient, Product, ProductItem } from "@prisma/client";
+import { detailsTextIngredients } from "@/constants/constants";
+// import shallow from "zustand/shallow";
 interface ProductCardGroupProps {
   className?: string;
   // items: ProductItem[];
@@ -27,7 +21,9 @@ export interface ProductIngedientItem extends Product {
   items: ProductItem[];
   ingredients: Ingredient[];
 }
-const ProguctCardGroup: FunctionComponent<ProductCardGroupProps> = ({
+const ProguctCardGroup: FunctionComponent<ProductCardGroupProps> =
+// memo(
+  ({
   className,
   title,
   items,
@@ -36,38 +32,35 @@ const ProguctCardGroup: FunctionComponent<ProductCardGroupProps> = ({
 }) => {
   const intersectionRef = useRef(null);
 
-  //   const [ancor, setAncor] = useHash();
   const intersection = useIntersection(intersectionRef, {
     // root: null,
     rootMargin: "-456px 0px",
     threshold: 0,
     // threshold: 0.8,
   });
+  // const intersection = useMemo(() => intersectionN, [
+  //   intersectionN
+  // ]);
   const intersectionRefDelay = useRef<IntersectionObserverEntry>(null);
   //   @ts-ignore
   intersectionRefDelay.current = intersection;
+
   const setActiveCategoryId = useStoreCategory(
     (state) => state.setActiveCategoryId
+    // ,shallow
   );
-  // useSetAncor({intersection,ancorName:title + categoryId,ref:intersectionRef})
-  useEffect(() => {
-    // console.log(title + categoryId);
 
+  useEffect(() => {
     if (intersection && intersection.isIntersecting) {
       setActiveCategoryId(title);
-
     }
   }, [intersection, intersection?.isIntersecting]);
-
+  console.log('ProguctCardGroup itemss', items);
+  
   return (
-    <div
-      className={cn(" relative", className)}
-      // id={title + categoryId.toString()}
-      ref={intersectionRef}
-    >
+    <div className={cn(" relative", className)} ref={intersectionRef}>
       <span
         className="anc"
-        // id={title + categoryId.toString()}
         id={title}
         style={{
           visibility: "hidden",
@@ -81,29 +74,36 @@ const ProguctCardGroup: FunctionComponent<ProductCardGroupProps> = ({
           {title}
         </Title>
       )}
-
       <div className="grid grid-cols-3 gap-[50px]">
-        {items.map((el, idx) => {
-          return (
-            // <div className="" >
-            <ProductCard
-              key={el.id}
-              id={el.id}
-              name={el.name}
-              // price={el.items[0].price}
-              price={(()=>{
-                const pricesArr = el.items.map((el)=>el.price)
-                const index = pricesArr.indexOf(Math.min(...pricesArr))
-                return el.items[index].price
-              })()}
-              imageUrl={el.imageUrl}
-            ></ProductCard>
-            // </div>
-          );
-        })}
+        {items.length &&
+          items.map((el, idx) => {
+            return (
+              <ProductCard
+                key={el.id}
+                id={el.id}
+                name={el.name}
+                price={(() => {
+                  const pricesArr = el.items.map((el) => el.price);
+                  const index = pricesArr.indexOf(Math.min(...pricesArr));
+                  return el.items[index].price;
+                })()}
+                imageUrl={el.imageUrl}
+                description={
+                  // el.ingredients.map((el) => el.name).join(", ")
+                  detailsTextIngredients(el.ingredients)
+                }
+              ></ProductCard>
+            );
+          })}
       </div>
     </div>
   );
-};
+}
+// ,(
+//   prevProps,
+//   nextProps
+// ) => {
+//   return prevProps.items === nextProps.items;
+// })
 
 export default ProguctCardGroup;

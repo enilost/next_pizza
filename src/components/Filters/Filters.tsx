@@ -2,8 +2,8 @@
 import { cn } from "@/lib/utils";
 import {
   ChangeEvent,
-  Dispatch,
   FunctionComponent,
+  memo,
   SetStateAction,
   useEffect,
   useRef,
@@ -16,8 +16,8 @@ import CheckboxGroupCustom from "../CheckboxGroupCustom/CheckboxGroupCustom";
 import apiClient from "../../../services/apiClient";
 import { Ingredient, ProductItem } from "@prisma/client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { usePrevious } from "react-use";
-import { PRODUCT_TYPES, SIZE_TYPES } from "@/constants/constants";
+
+import { FILTER_PARAMS, PRODUCT_TYPES } from "@/constants/constants";
 
 interface FiltersProps {
   className?: string;
@@ -41,7 +41,10 @@ export interface PizzaTypeItem {
   // productItemsIds: number[];
   checked: boolean;
 }
-
+//у компонента двойной рендер на каждое измнение
+// из-за того что, при изменении чеков пересчитывается строка фильтра в юзэффекте
+// чек-ререндер-пересчетСтроки-ререндер
+// можно строку searchString переделать в реф, чтоб этого не было
 const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
   // максимальный и минимальный рэйндж цены в фильтре
   const minMaxRange = [0, 1500] as [number, number];
@@ -71,14 +74,18 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
   const searchParams = useSearchParams();
   const pathName = usePathname();
 
-  // все серчпараметры для основной строки этого компонента
-  const FILTER_PARAMS = {
-    INGREDIENTS: "ingredients",
-    SIZE: "sizes",
-    PIZZA_TYPE: "pizza-types",
-    PRICE_FROM: "price-from",
-    PRICE_TO: "price-to",
-  } as const;
+  // // все серчпараметры для основной строки этого компонента
+  // const FILTER_PARAMS:I_FILTER_PARAMS = {
+  //   INGREDIENTS: "ingredients",
+  //   SIZE: "sizes",
+  //   PIZZA_TYPE: "pizza-types",
+  //   PRICE_FROM: "price-from",
+  //   PRICE_TO: "price-to",
+  // } as const;
+
+  // таймаут для перехода и время
+  let timeouRouterPush = useRef<NodeJS.Timeout | false>(false);
+  const TIMEOUT_DELAY = 2000;
 
   // меняет цену инпутами
   const changePrice = (event: ChangeEvent<HTMLInputElement>, idx: number) => {
@@ -264,15 +271,7 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
     }
     // заполняет инпуты цены в фильтре
     setPrice(fillPriceArr());
-    // ////////////////////////
-    // const handleRouteChange = () => {
-    //   console.log("handleRouteChange-->");
 
-    //   // Выполните код здесь, прежде чем произойдет изменение истории
-    // };
-
-    // window.addEventListener('navigate', handleRouteChange);
-    // /////////////////////
     Promise.all([getIngredients(), getProductItems()]).finally(() => {
       setTimeout(() => {
         //блочит выполнение остальных юзэффектов во время исполнения маунтед
@@ -283,107 +282,62 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
 
   // ФОРМИРУЕТ ОСНОВНУЮ СТРОКУ КОМПОНЕНТА!!!
   useEffect(() => {
-    // пересчитывает строку серчпараметров в зависимости от чеков
+    // пересчитывает строку серчпараметров в зависимости от фильтров
     if (firstLoading) {
       return;
     }
-    console.log("useEffect 2");
-    // if (price !== prevprice) {
-    //   console.log("useEffect2 вызван из-за изменения переменной price ", price);
-    // }
-    // if (ingredients !== previngredients) {
-    //   console.log(
-    //     "useEffect2 вызван из-за изменения переменной ingredients ",
-    //     ingredients
-    //   );
-    // }
-    // if (sizesArr !== prevsizesArr) {
-    //   console.log(
-    //     "useEffect2 вызван из-за изменения переменной sizesArr ",
-    //     sizesArr
-    //   );
-    // }
-    // if (pizzaTypesArr !== prevpizzaTypesArr) {
-    //   console.log(
-    //     "useEffect2 вызван из-за изменения переменной pizzaTypesArr ",
-    //     pizzaTypesArr
-    //   );
-    // }
+    // console.log("useEffect 2 createSearchParamsString");
 
-    // if (loadingIngredients !== prevloadingIngredients) {
-    //   console.log(
-    //     "useEffect2 вызван из-за изменения переменной loadingIngredients ",loadingIngredients
-    //   );
-    // }
-    // if (loadingSizesArr !== prevloadingSizesArr) {
-    //   console.log(
-    //     "useEffect2 вызван из-за изменения переменной loadingSizesArr ",loadingSizesArr
-    //   );
-    // }
-
-    // функция генерирует основную строку
-    const createSearchParamsString = () => {
-      const newsearchParams = new URLSearchParams();
-      // если цена не равна дефолтному значению
-      if (price[0] != minMaxRange[0] && inRange(price[0])) {
-        newsearchParams.append(FILTER_PARAMS.PRICE_FROM, price[0].toString());
-      }
-      if (price[1] != minMaxRange[1] && inRange(price[1])) {
-        newsearchParams.append(FILTER_PARAMS.PRICE_TO, price[1].toString());
-      }
-      // собирает список id выбранных ингредиентов
-      const checkedIngredients = ingredients
-        .filter((el) => el.checked)
-        .map((el) => el.id);
-      // собирает список size выбранных размеров
-      const checkedSizes = sizesArr
-        .filter((el) => el.checked)
-        .map((el) => el.size);
-      // собирает список pizza-types выбранных типов теста
-      const checkedPizzaTypes = pizzaTypesArr
-        .filter((el) => el.checked)
-        .map((el) => el.pizzaType);
-
-      if (checkedIngredients.length > 0) {
-        // если есть выбранные ингредиенты, то добавляет их в строку
-        newsearchParams.append(
-          FILTER_PARAMS.INGREDIENTS,
-          checkedIngredients.toString()
-        );
-      }
-      if (checkedSizes.length > 0) {
-        // если есть выбранные размеры, то добавляет их в строку
-        newsearchParams.append(FILTER_PARAMS.SIZE, checkedSizes.toString());
-      }
-      if (checkedPizzaTypes.length > 0) {
-        // если есть выбранные типы теста, то добавляет их в строку
-        newsearchParams.append(
-          FILTER_PARAMS.PIZZA_TYPE,
-          checkedPizzaTypes.toString()
-        );
-      }
-      // возвращает сгенерированную строку серчпараметров
-      return newsearchParams.toString();
-    };
-
-    // чтоб не изменять основную строку(серч-строку) при каждом изменении множества стейтов
-    // или при каждом срабаатывании этого эффекта, делает буфер в 1500
-
-    // const timeouRouterPush = setTimeout(() => {
-    //   // таймаут удаляется в ретерне
-    //   const newsearchParams = createSearchParamsString();
-    //   setSearchString(newsearchParams);
-    // }, 2500);
     const newsearchParams = createSearchParamsString();
-    setSearchString(newsearchParams);
-    return () => {
-      // удаляем таймаут, если буфер не закончился
-      // if (timeouRouterPush) {
-      //   clearTimeout(timeouRouterPush);
-      // }
-    };
+    // console.log("newsearchParams", newsearchParams);
+
+    setSearchString((prev) => newsearchParams);
   }, [price, ingredients, sizesArr, pizzaTypesArr, firstLoading]);
 
+  // функция генерирует основную строку
+  const createSearchParamsString = () => {
+    const newsearchParams = new URLSearchParams();
+    // если цена не равна дефолтному значению
+    if (price[0] != minMaxRange[0] && inRange(price[0])) {
+      newsearchParams.append(FILTER_PARAMS.PRICE_FROM, price[0].toString());
+    }
+    if (price[1] != minMaxRange[1] && inRange(price[1])) {
+      newsearchParams.append(FILTER_PARAMS.PRICE_TO, price[1].toString());
+    }
+    // собирает список id выбранных ингредиентов
+    const checkedIngredients = ingredients
+      .filter((el) => el.checked)
+      .map((el) => el.id);
+    // собирает список size выбранных размеров
+    const checkedSizes = sizesArr
+      .filter((el) => el.checked)
+      .map((el) => el.size);
+    // собирает список pizza-types выбранных типов теста
+    const checkedPizzaTypes = pizzaTypesArr
+      .filter((el) => el.checked)
+      .map((el) => el.pizzaType);
+
+    if (checkedIngredients.length > 0) {
+      // если есть выбранные ингредиенты, то добавляет их в строку
+      newsearchParams.append(
+        FILTER_PARAMS.INGREDIENTS,
+        checkedIngredients.toString()
+      );
+    }
+    if (checkedSizes.length > 0) {
+      // если есть выбранные размеры, то добавляет их в строку
+      newsearchParams.append(FILTER_PARAMS.SIZE, checkedSizes.toString());
+    }
+    if (checkedPizzaTypes.length > 0) {
+      // если есть выбранные типы теста, то добавляет их в строку
+      newsearchParams.append(
+        FILTER_PARAMS.PIZZA_TYPE,
+        checkedPizzaTypes.toString()
+      );
+    }
+    // возвращает сгенерированную строку серчпараметров
+    return newsearchParams.toString();
+  };
   useEffect(() => {
     // если сгенерированная с помощью фильтров серч-строка не равна серч-строке в урле
     // то перестраивает стейт в соответствии с урлом
@@ -391,97 +345,77 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
     if (firstLoading) {
       return;
     }
-    // console.log("useEffect 3 SearchParams - ", searchParams.toString());
-    // console.log("useEffect 3 searchString - ", searchString);
-    console.log("useeffect searchParams", searchParams.toString());
+    // console.log("useEffect 3 searchParams.toString()");
 
     if (searchString !== searchParams.toString()) {
       // setAllCheckUrl();
     }
   }, [searchParams.toString()]); //срабатывает после пуша
+  // }, [window.location.search]); //срабатывает сразу после 2 до пуша
 
   useEffect(() => {
+    // пушит на страницу с новыми серчпараметрами
     if (firstLoading) {
       return;
     }
-    console.log("useEffect 4 searchString - ", searchString);
+    // console.log("useEffect 4 searchString - ", searchString);
+    // если сгенерированная с помощью фильтров серч-строка не равна серч-строке в урле
+    // то переходим на новую страницу через setTimeout
     if (searchString !== searchParams.toString()) {
-      // console.log("Router.push pathName --->>> ", pathName);
-      console.log(
-        `Router.push pathName --->>> ${pathName} --->>> `,
-        "?" + searchString
-      );
-      // Router.back();
-      // Router.replace(
-      //   //push replace
-      //   "/?" + searchString,
-      //   // pathName + `${searchString.length ? "?" + searchString : ""}`,
-      //   {
-      //     scroll: false,
-      //   }
-      // );
-////////////////////////////////////
-      // Router.events.on('navigate', (url) => {
-      //   // Выполните код здесь, прежде чем произойдет изменение истории
-      // });
-
-      // const params = new URLSearchParams(searchString);
-      // const obj = Object.fromEntries(params);
-      // for (const key of SearchParams.keys()) {
-      //   SearchParams.delete(key);
-      // }
-
-      // const s = new URLSearchParams(searchString);
-      // const  obj = Object.fromEntries(s );
-      // const queryString = JSON.stringify(obj);
-      // Router.push('?'+searchString)
-    }
-     timeouRouterPush.current = setTimeout(() => {
-      // таймаут удаляется в ретерне
-      if (searchString !== searchParams.toString()) {
-        console.log('timeouRouterPush');
-        
+      timeouRouterPush.current = setTimeout(() => {
+        // таймаут удаляется в ретерне
+        // console.log("timeouRouterPush");
         Router.replace(
           //push replace
-          "/?" + searchString,
+          "/" + searchString.length ? "?" + searchString : "",
           // pathName + `${searchString.length ? "?" + searchString : ""}`,
           {
             scroll: false,
           }
         );
-        timeouRouterPush.current = false
-      }
-    }, 2500);
+        timeouRouterPush.current = false;
+      }, TIMEOUT_DELAY);
+    }
     return () => {
       // удаляем таймаут, если буфер не закончился
       if (timeouRouterPush.current) {
         clearTimeout(timeouRouterPush.current);
-        timeouRouterPush.current = false
+        timeouRouterPush.current = false;
       }
     };
   }, [searchString]);
-  // }, [window.location.search]); //срабатывает сразу после 2 до пуша
-  let timeouRouterPush = useRef<NodeJS.Timeout | false>(false) ;
+
   useEffect(() => {
     if (firstLoading) {
       return;
     }
-    console.log("useEffect 5 pathName - ", pathName);
-    console.log("useEffect 5 timeouRouterPush - ", timeouRouterPush.current);
-    if(timeouRouterPush.current !== false){
-      console.log('timeouRouterPush !== false');
-      timeouRouterPush.current = false
-      Router.push(
-        "/?" + searchString,
-        {
-          scroll: false,
-        }
-      )
+    // допустим пользователь нажал на роутинг до срабатывания таймаута
+    // тогда при возвращении у него в урле не будет той строки серчпараметров, которую он выбрал
+
+    // тут сравнивается сгенерированная стейтом серчстрока с серчстрокой в урле
+    // и выставляется серчстрока на основе стейта
+    if (timeouRouterPush.current !== false) {
+      clearTimeout(timeouRouterPush.current);
+      timeouRouterPush.current = false;
+    }
+    if (pathName === "/") {
+      if (searchString !== searchParams.toString()) {
+        const newsearchParams = createSearchParamsString();
+        // history.replaceState({},'',newsearchParams? '/'+'?'+newsearchParams:'/')
+        Router.replace(
+          "/" + newsearchParams.length ? "?" + newsearchParams : "",
+          {
+            scroll: false,
+          }
+        );
+      }
     }
   }, [pathName]);
 
   const setAllCheckUrl = () => {
     console.log("setAllCheckUrl");
+    // заполняет стейт из юрл строки,
+    // просто альтернативныцй неиспользуемый метод
 
     // карта сеттеров части стейта
     const mapSetStatesCheck = {
@@ -571,6 +505,7 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
       });
     });
   };
+  // console.log('render FILTRES');
 
   return (
     <div className={cn("", className)}>
