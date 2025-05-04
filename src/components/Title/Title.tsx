@@ -6,7 +6,7 @@ type TitleSize = 'h5' | 'h4' | 'h3' | 'h2' | 'h1' | 'h1+';
 interface Props {
   size?: TitleSize;
   className?: string;
-  children: string;
+  children: React.ReactNode;
 }
 
 export const Title: React.FC<Props> = ({  size = 'h4', className,children }) => {
@@ -27,7 +27,7 @@ export const Title: React.FC<Props> = ({  size = 'h4', className,children }) => 
     h1: 'text-[40px]',
     'h1+': 'text-[48px]',
   } as const;
-
+  
   return React.createElement(
     size == 'h1+'? 'h1': size,
     { className: clsx(mapClassNameBySize[size], className) },

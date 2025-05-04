@@ -76,17 +76,18 @@ const CartDrawer: FunctionComponent<CartDrawerProps> = ({
   //       });
   //     }
   //   };
-  
+
   //   window.addEventListener('storage', handleStorage);
   //   return () => window.removeEventListener('storage', handleStorage);
   // }, []);
-  console.log('cartdrawer');
-  
+  // bg-[hsl(20,100%,50%,0.2)]
+  console.log("cartdrawer");
+
   const totalCount = items.reduce((acc, item) => acc + item.quantity, 0);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger>{children}</SheetTrigger>
-      <SheetContent className="flex flex-col justify-between pb-0 bg-[#fef9f4]">
+      <SheetContent className="flex flex-col justify-between pb-0 bg-[#fef9f4] bg-[hsla(20,100%,96%,1)]">
         <SheetHeader>
           <SheetTitle>
             В корзине {""}
@@ -177,11 +178,12 @@ const CartDrawer: FunctionComponent<CartDrawerProps> = ({
               >
                 {items.length == 0 ? "Корзина пуста" : "Оформить заказ"}
 
-                {loading ? (
+                {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
+                {/* {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin ml-2" />
                 ) : (
                   <ArrowRight className="w-5 h-5 ml-2" />
-                )}
+                )} */}
               </Button>
             </Link>
           </div>

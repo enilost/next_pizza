@@ -1,15 +1,16 @@
 import { Prisma } from "@prisma/client";
-
+// /////////////////////////////////////////
 const error = {
   error: "Ошибка, нет такого типа в файле constants.ts",
 } as const;
-// : Record<string, string>
+// /////////////////////////////////////////
 export const PRODUCT_TYPES = {
   "1": "тонкое тесто",
   "2": "традиционное тесто",
   null: "",
   ...error,
 } as const;
+// /////////////////////////////////////////
 export const SIZE_TYPES = {
   "20": "Маленький размер",
   "30": "Средний размер",
@@ -17,7 +18,7 @@ export const SIZE_TYPES = {
   null: "Стандартная порция",
   ...error,
 } as const;
-
+// /////////////////////////////////////////
 export const detailsTextSize = (size: number | null, type: number | null) => {
   return `${
     size
@@ -32,13 +33,13 @@ export const detailsTextSize = (size: number | null, type: number | null) => {
         PRODUCT_TYPES["error"]
   }.`;
 };
-
+// /////////////////////////////////////////
 export const detailsTextIngredients = (ingredients: { name: string }[]) => {
   return ingredients.length
     ? `Добавки: ${ingredients.map((el) => el.name.toLowerCase()).join(", ")}.`
     : "";
 };
-
+// /////////////////////////////////////////
 export interface I_FILTER_PARAMS {
   INGREDIENTS: "ingredients";
   SIZE: "sizes";
@@ -220,3 +221,6 @@ export class CreatePrismaFilter {
     };
   }
 }
+// /////////////////////////////////////////
+export const JVT_TOKEN_NAME = "NextPizzaJwtToken";
+

@@ -1,11 +1,8 @@
 "use client";
-
-import { usePathname, useRouter } from "next/navigation";
-import { Dialog, DialogContent } from "../ui/dialog";
-import Link from "next/link";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-// import { useNavigate } from "next/navigation";
+import { createPortal } from "react-dom";
 
 export function Modal({
   children,
@@ -15,36 +12,18 @@ export function Modal({
   className?: string;
 }) {
   const Router = useRouter();
-  const pathname = usePathname();
-  //   const navigate = useNavigate();
-  const back = () => {
-    const previousUrl = document.referrer; // window.history.state//.url//.back();
-    console.log("previousUrl", previousUrl);
-    console.log("previousUrl", history);
-
-    if (
-      "scrollRestoration" in history &&
-      history.scrollRestoration !== "manual"
-    ) {
-      const p = history.scrollRestoration;
-      history.scrollRestoration = "manual";
-      Router.back();
-      // history.scrollRestoration = p;
-    }
-  };
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    console.log("modal mount", window.scrollY);
-    // console.log("modal router", router);
-    // console.log("modal pathname", pathname);
-    // console.log("modal window.location.pathname", window.location);
+    setMounted(true);
     const body = document.body;
     body.style.overflow = "hidden";
     return () => {
-      console.log("modal unmount");
       body.style.overflow = "auto";
     };
   }, []);
-  return (
+
+  if(!mounted) return null;
+  const modalTemplate = (
     <div
       className={cn(
         "fixed top-0 bottom-0 left-0 right-0  z-55 bg-slate-400/80 flex items-center justify-center overflow-hidden",
@@ -53,10 +32,12 @@ export function Modal({
       onClick={() => {
         Router.back();
       }}
+      id="modal_overlay"
     >
       <div
         className=" max-h-[77%] bg-white p-8 rounded-3xl overflow-hidden flex relative"
         onClick={(e) => e.stopPropagation()}
+        id="modal_wrapper"
       >
         <button
           type="button"
@@ -86,15 +67,22 @@ export function Modal({
           <span className="sr-only">Close</span>
         </button>
 
-        <div className="overflow-y-auto overflow-x-hidden scrl_glbl ">
+        <div
+          className="overflow-y-auto overflow-x-hidden scrl_glbl "
+          id="modal_inner"
+        >
           {children}
         </div>
       </div>
     </div>
-    // <Dialog open={Boolean(children)}>
-    //     <DialogContent>
-    //         {children}
-    //         </DialogContent>
-    // </Dialog>
+  );
+  const modalContainer = document.getElementById("modal_container");
+  if (modalContainer) {
+    const layoutModalContainer = document.getElementById("layout_modal_container");
+    if (layoutModalContainer) layoutModalContainer.remove();
+    return createPortal(modalTemplate, modalContainer);
+  }
+  return (
+    modalTemplate
   );
 }

@@ -2,6 +2,7 @@
     products="products",
     ingredients="ingredients",
     productItems="product-items",
-    cart="cart"
+    cart="cart",
+    auth="auth",
 }
 export default CONSTANTS_API

@@ -55,7 +55,7 @@ const ProguctCardGroup: FunctionComponent<ProductCardGroupProps> =
       setActiveCategoryId(title);
     }
   }, [intersection, intersection?.isIntersecting]);
-  console.log('ProguctCardGroup itemss', items);
+  // console.log('ProguctCardGroup itemss', items);
   
   return (
     <div className={cn(" relative", className)} ref={intersectionRef}>

@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         resolve(1);
-      }, 2000);
+      }, 1000);
     });
   };
   await bounce();

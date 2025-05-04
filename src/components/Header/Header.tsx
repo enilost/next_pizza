@@ -9,14 +9,27 @@ import HeaderSearch from "../HeaderSearch/HeaderSearch";
 import Link from "next/link";
 import HeaderCart from "../HeaderCart/HeaderCart";
 // import CartDrawer from "../CartDrawer/CartDrawer";
-interface HeaderProps {}
+interface HeaderProps {
+  headerSeach?: boolean;
+  headerCart?: boolean;
+  headerLogin?: boolean;
+  className?: string;
+  isAuth?: boolean;
+}
 
-const Header: FunctionComponent<HeaderProps> = (props) => {
+const Header: FunctionComponent<HeaderProps> = ({
+  headerSeach = true,
+  headerCart = true,
+  headerLogin = true,
+  isAuth = false,
+  className,
+}) => {
   // console.log("Header", props);
 
   return (
-    <header className={cn("border border-b border-x-0")}>
-      
+    <header
+      className={cn(className || "", "border border-b border-x-0 border-t-0 ")}
+    >
       <Container>
         <div className={cn(" flex justify-between items-center py-8")}>
           <Link href={"/?price-to=14341&pizza-types=2"}>
@@ -26,33 +39,52 @@ const Header: FunctionComponent<HeaderProps> = (props) => {
                 <h1 className={cn(" text-2xl uppercase font-black")}>
                   NEXT pizza
                 </h1>
-                <p className={cn(" text-sm text-gray-400 leading-3")}>
+                <p
+                  className={cn(
+                    " text-sm text-gray-400 leading-3 ",
+                    className ? "text-white" : ""
+                  )}
+                >
                   {" "}
                   Вкусней уже некуда
                 </p>
               </div>
             </div>
           </Link>
-
-          <Suspense>
-            <HeaderSearch className="mx-10 flex-1"></HeaderSearch>
-          </Suspense>
+          {headerSeach && (
+            <Suspense>
+              <HeaderSearch className="mx-10 flex-1"></HeaderSearch>
+            </Suspense>
+          )}
 
           <div className={cn("flex items-center gap-2")}>
-            <Button
-              variant={"outline"}
-              className={cn(" flex items-center gap-1")}
-            >
-              <User size={"22px"} />
-              Войти
-            </Button>
-
+            {headerLogin &&
+              (isAuth ? (
+                <Link href={"/profile"} key={"profile"}>
+                  <Button
+                    variant={"outline"}
+                    className={cn(" flex items-center gap-1")}
+                  >
+                    <User size={"22px"} />
+                    Профиль
+                  </Button>
+                </Link>
+              ) : (
+                <Link href={"/login"} key={"login"}>
+                  <Button
+                    variant={"outline"}
+                    className={cn(" flex items-center gap-1")}
+                  >
+                    <User size={"22px"} />
+                    Войти
+                  </Button>
+                </Link>
+              ))}
             <div>
-            {/* <Suspense> */}
-              <HeaderCart />
+              {/* <Suspense> */}
+              {headerCart && <HeaderCart />}
               {/* </Suspense> */}
             </div>
-            
           </div>
         </div>
       </Container>

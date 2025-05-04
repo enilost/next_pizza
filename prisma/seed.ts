@@ -39,6 +39,8 @@ async function up() {
         password: hashSync("123123", 10),
         verified: new Date(),
         role: "USER",
+        phone: "1-111-111-11-11",
+        address: '{"data":{"fias_level":"8"},"value":"Москва"}',
       },
       {
         fullName: "admin",
@@ -46,6 +48,8 @@ async function up() {
         password: hashSync("123123", 10),
         verified: new Date(),
         role: "ADMIN",
+        phone: "2-222-222-22-22",
+        address: '{"data":{"fias_level":"8"},"value":"Москва"}',
       },
     ],
   });

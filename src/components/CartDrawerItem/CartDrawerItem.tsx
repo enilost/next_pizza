@@ -40,7 +40,7 @@ const CartDrawerItem: FunctionComponent<CartDrawerItemProps> = ({
 }) => {
   return (
     <div
-      className={cn("flex bg-white rounded-lg p-5 gap-6", className)}
+      className={cn("flex bg-white rounded-lg p-3 gap-6", className)}
       style={style}
     >
       <img className="w-[65px] h-[65px]" src={imageUrl} alt="Logo" />
@@ -49,11 +49,11 @@ const CartDrawerItem: FunctionComponent<CartDrawerItemProps> = ({
         <h2 className="text-lg font-bold">{name}</h2>
 
         {textDetails && textDetails.length > 0 && (
-          <p className="text-sm text-gray-400">{textDetails}</p>
+          <p className="text-sm text-gray-700">{textDetails}</p>
         )}
 
         {textIngredients && textIngredients.length > 0 && (
-          <p className="text-sm text-gray-400">{textIngredients}</p>
+          <p className="text-sm text-gray-500">{textIngredients}</p>
         )}
 
         <hr className="my-3" />

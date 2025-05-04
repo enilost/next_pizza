@@ -24,6 +24,7 @@ const CountButton: FunctionComponent<CountButtonProps> = ({
       )}
     >
       <Button
+        type="button"
         variant="outline"
         className={cn(
           "p-0 hover:bg-primary hover:text-white",
@@ -44,6 +45,7 @@ const CountButton: FunctionComponent<CountButtonProps> = ({
       </Button>
       <b className={size === "h4" ? "text-sm" : "text-md"}>{value}</b>
       <Button
+        type="button"
         variant="outline"
         className={cn(
           "p-0 hover:bg-primary hover:text-white",

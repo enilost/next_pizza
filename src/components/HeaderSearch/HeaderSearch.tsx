@@ -84,13 +84,7 @@ const HeaderSearch: FunctionComponent<HeaderSearchProps> = ({ className }) => {
             isFocused ? "visible opacity-100 top-12" : ""
           )}
         >
-          {/* h-11  max-h-full overflow-y-auto py-2   px-5 py-1*/}
-
           <div className=" max-h-inherit overflow-y-auto scrl_glbl">
-          {/* <div className="scrollbar w-2 bg-gray-200">
-    <div className="scrollbar-thumb bg-primary rounded"></div>
-    <div className="scrollbar-track bg-gray-200"></div>
-  </div> */}
             {searchResults.length ? (
               searchResults.map((item) => (
                 <Link

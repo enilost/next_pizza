@@ -17,7 +17,9 @@ export async function POST(req:NextRequest) {
         fullName: body.fullName,
         email: body.email,
         password: body.password,
-        verified: body.verified
+        verified: body.verified,
+        phone: body.phone,
+        address: body.address,
       },
     })
 

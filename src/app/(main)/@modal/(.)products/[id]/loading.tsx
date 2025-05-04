@@ -10,11 +10,11 @@ interface LoadProps {
 
 const Load: FunctionComponent<LoadProps> = ({ params }) => {
   useEffect(() => {
-    console.log("Loading mount");
+    // console.log("Loading mount");
     const body = document.body;
     body.style.overflow = "hidden";
     return () => {
-      console.log("Loading unmount");
+      // console.log("Loading unmount");
       body.style.overflow = "auto";
     };
   }, []);
