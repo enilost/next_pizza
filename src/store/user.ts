@@ -34,29 +34,27 @@ interface UserStore {
   validErrorEmail: string | null;
   setValidErrorEmail: () => string | null;
   ///////////////////////////////////////////////////////
+  queryInputAddress: string;
+  setQueryInputAddress: (queryInputAddress: string) => void;
   address: I_dadataAddress | null;
   setAddress: (address: I_dadataAddress | null) => void;
   validErrorAddress: string | null;
   setValidErrorAddress: (validAddress: string | null) => void;
-  // catchErrorAddress: Error | null;
-  triggerForGetAddressData: boolean;
-  getAddressData: () => void;
   ///////////////////////////////////////////////////////
   comment: string;
   setComment: (comment: string) => void;
   ///////////////////////////////////////////////////////
   validError: () => boolean;
   createUserObject: () => UserObject;
-  fetchSendOrder: (cartItems: ICart["items"]) => void;
   ///////////////////////////////////////////////////////
-  //   token: string;
-  //     id: string;
+  isAuth: boolean;
+  setIsAuth: (isAuth: boolean) => void;
 }
 
 export const useStoreUser = create<UserStore>()(
   devtools((set, get) => {
     return {
-      // ///////////////////////////////////////////////////////
+      // firstName/////////////////////////////////////////////
       firstName: "",
       setFirstName: (firstName) => {
         set({ firstName });
@@ -70,7 +68,7 @@ export const useStoreUser = create<UserStore>()(
         set({ validErrorFirstName });
         return validErrorFirstName;
       },
-      // ///////////////////////////////////////////////////////
+      // lastName//////////////////////////////////////////////
       lastName: "",
       setLastName: (lastName) => {
         set({ lastName });
@@ -84,7 +82,7 @@ export const useStoreUser = create<UserStore>()(
         set({ validErrorLastName });
         return validErrorLastName;
       },
-      // ///////////////////////////////////////////////////////
+      // phone////////////////////////////////////////////////
       phone: "",
       setPhone: (phone) => {
         set({ phone });
@@ -98,7 +96,7 @@ export const useStoreUser = create<UserStore>()(
         set({ validErrorPhone });
         return validErrorPhone;
       },
-      // ///////////////////////////////////////////////////////
+      // email/////////////////////////////////////////////////
       email: "",
       setEmail: (email) => {
         set({ email });
@@ -112,23 +110,24 @@ export const useStoreUser = create<UserStore>()(
         set({ validErrorEmail });
         return validErrorEmail;
       },
-      // ///////////////////////////////////////////////////////
+      // address/////////////////////////////////////////////////
+      queryInputAddress: "",
+      setQueryInputAddress: (queryInputAddress) => {
+        set({ queryInputAddress });
+      },
       address: null,
       setAddress: (address) => {
         set({ address });
       },
       validErrorAddress: null,
       setValidErrorAddress: (validErrorAddress) => set({ validErrorAddress }),
-      // catchErrorAddress: null,
-      triggerForGetAddressData: false,
-      getAddressData: () => {
-        set({ triggerForGetAddressData: !get().triggerForGetAddressData });
-      },
-      // ///////////////////////////////////////////////////////
+      // comment///////////////////////////////////////////////
       comment: "",
       setComment: (comment) => set({ comment }),
-      // ///////////////////////////////////////////////////////
-
+      // isAuth/////////////////////////////////////////////////
+      isAuth: false,
+      setIsAuth: (isAuth) => set({ isAuth }),
+      ///////////////////////////////////////////////////////
       validError: () => {
         const state = get();
         // Обновляем ошибки для каждого поля на случай, если инпут не трогали
@@ -143,11 +142,15 @@ export const useStoreUser = create<UserStore>()(
         const p = state.setValidErrorPhone();
         const e = state.setValidErrorEmail();
         let a = state.validErrorAddress;
-        if (!state.address && !state.validErrorAddress) {
-          // если с инпутом даты не взаимодействовали
-          // то этот метод тригернет ререндер дадаты и ошибку валидации
-          state.getAddressData();
-          a = "любая строка)))";
+
+        // если с инпутом даты не взаимодействовали
+        if (
+          !state.address &&
+          !state.validErrorAddress &&
+          !state.queryInputAddress
+        ) {
+          a = "Поле обязательно для заполнения";
+          set({ validErrorAddress: a });
         }
 
         if (f || l || p || e || a) {
@@ -167,16 +170,7 @@ export const useStoreUser = create<UserStore>()(
           comment: state.comment,
         };
       },
-      fetchSendOrder: (cartItems) => {
-        if (get().validError()) {
-          // return;
-        }
-        const userObject = get().createUserObject();
-        console.log("userObject", userObject);
-        console.log("cartItems", cartItems);
-      },
-      //   token: "",
-      //   id: "",
+
     };
   })
 );

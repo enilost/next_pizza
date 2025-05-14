@@ -16,7 +16,7 @@ interface TokenPayload {
   role: string;
   // address: Prisma.JsonValue;
 }
-type JwtType = TokenPayload & JWTPayload;
+export type JwtType = TokenPayload & JWTPayload;
 export function createJwtToken(
   payload: TokenPayload,
   secret: string,
@@ -47,7 +47,7 @@ export function verifyTokenJWB(token: string, secret: string) {
     const decoded = verify(token, secret);
     return decoded as JwtType;
   } catch (error) {
-    console.error("verifyTokenJVB error:", error);
+    // console.error("verifyTokenJVB error:", error);
     return null;
   }
 }

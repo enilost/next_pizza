@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { registration } from "../../../services/auth";
 import { AxiosError } from "axios";
 import { IReturnUser } from "@/app/api/auth/route";
+import { useRouter } from "next/navigation";
 
 interface RegistrationProps {
   loading: boolean;
@@ -26,6 +27,8 @@ const Registration: FunctionComponent<RegistrationProps> = ({
     null
   );
 
+  const Router = useRouter();
+
   const [
     validError,
     setFirstName,
@@ -33,6 +36,8 @@ const Registration: FunctionComponent<RegistrationProps> = ({
     setPhone,
     setEmail,
     setAddress,
+    setQueryInputAddress,
+    setIsAuth
   ] = useStoreWithEqualityFn(
     useStoreUser,
     (state) => [
@@ -42,6 +47,8 @@ const Registration: FunctionComponent<RegistrationProps> = ({
       state.setPhone,
       state.setEmail,
       state.setAddress,
+      state.setQueryInputAddress,
+      state.setIsAuth
     ],
     (prev, next) => true
   );
@@ -92,7 +99,12 @@ const Registration: FunctionComponent<RegistrationProps> = ({
     setLastName(lastname);
     setPhone(user.phone);
     setEmail(user.email);
-    user.address && setAddress(user.address as unknown as I_dadataAddress);
+    if (user.address) {
+      const typedAddress = user.address as unknown as I_dadataAddress;
+      setAddress(typedAddress);
+      setQueryInputAddress(typedAddress.value);
+    }
+    setIsAuth(true);
   };
   const submitForm = async () => {
     if (loading) return;
@@ -109,7 +121,6 @@ const Registration: FunctionComponent<RegistrationProps> = ({
         phone: userState.phone,
         address: userState.address,
       };
-      console.log("newUser ", newUser);
 
       const resUser = await registration(
         newUser,
@@ -117,6 +128,21 @@ const Registration: FunctionComponent<RegistrationProps> = ({
       );
       setUserState(resUser);
       toast.success("Регистрация прошла успешно");
+
+      // есть ли история для шага назад
+      const hasPreviousPage = window.history.length > 1;
+      // прошлая страница была на этом же сайте
+      const isSameDomain =
+        document.referrer &&
+        new URL(document.referrer).hostname === window.location.hostname;
+      // если есть история и она на этом же сайте,
+      // то возвращаемся на предыдущую страницу
+      // иначе переходим на главную страницу
+      if (hasPreviousPage && isSameDomain) {
+        Router.back();
+      } else {
+        Router.push("/");
+      }
     } catch (error) {
       console.log("Login.tsx error ", error);
       if (error instanceof AxiosError) {

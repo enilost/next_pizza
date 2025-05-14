@@ -68,6 +68,8 @@ const Login: FunctionComponent<LoginProps> = ({
     setFirstName,
     setLastName,
     setAddress,
+    setQueryInputAddress,
+    setIsAuth,
   ] = useStoreWithEqualityFn(
     useStoreUser,
     (state) => [
@@ -82,6 +84,8 @@ const Login: FunctionComponent<LoginProps> = ({
       state.setFirstName,
       state.setLastName,
       state.setAddress,
+      state.setQueryInputAddress,
+      state.setIsAuth
     ],
     (prev, next) =>
       prev[0] === next[0] && //email
@@ -89,6 +93,7 @@ const Login: FunctionComponent<LoginProps> = ({
       prev[3] === next[3] && //phone
       prev[5] === next[5] //validPhone
   );
+
   const handleEmail = (e: ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
   };
@@ -112,7 +117,12 @@ const Login: FunctionComponent<LoginProps> = ({
     setLastName(lastname);
     setPhone(user.phone);
     setEmail(user.email);
-    user.address && setAddress(user.address as unknown as I_dadataAddress);
+    if (user.address) {
+      const typedAddress = user.address as unknown as I_dadataAddress;
+      setAddress(typedAddress);
+      setQueryInputAddress(typedAddress.value);
+    }
+    setIsAuth(true);
   };
   const submitForm = async () => {
     if (loading) return;
@@ -125,7 +135,7 @@ const Login: FunctionComponent<LoginProps> = ({
     try {
       setLoading(true);
       if (phoneOrEmail === "phone") {
-        console.log("вход по телефону");
+        // console.log("вход по телефону");
         const user = await authPhone(
           {
             phone,
@@ -133,11 +143,10 @@ const Login: FunctionComponent<LoginProps> = ({
           },
           abortSignalref?.current.signal
         );
-
         setUserState(user);
         toast.success("Вы успешно вошли в аккаунт");
       } else if (phoneOrEmail === "email") {
-        console.log("вход по почте");
+        // console.log("вход по почте");
         const user = await authEmail(
           {
             email,
@@ -145,23 +154,23 @@ const Login: FunctionComponent<LoginProps> = ({
           },
           abortSignalref?.current.signal
         );
-
         setUserState(user);
-        // // есть ли история для шага назад
-        // const hasPreviousPage = window.history.length > 1;
-        // // прошлая страница была на этом же сайте
-        // const isSameDomain =
-        //   document.referrer &&
-        //   new URL(document.referrer).hostname === window.location.hostname;
-        // if (user._redirect) {
-        //   Router.push(user._redirect);
-        // } else if (hasPreviousPage && isSameDomain) {
-        //   Router.back();
-        // } else {
-        //   Router.push("/");
-        // }
-        Router.push("/");
         toast.success("Вы успешно вошли в аккаунт");
+      }
+      // есть ли история для шага назад
+      const hasPreviousPage = window.history.length > 1;
+      // прошлая страница была на этом же сайте
+      const isSameDomain =
+        document.referrer &&
+        new URL(document.referrer).hostname === window.location.hostname;
+
+      // если есть история и она на этом же сайте,
+      // то возвращаемся на предыдущую страницу
+      // иначе переходим на главную страницу
+      if (hasPreviousPage && isSameDomain) {
+        Router.back();
+      } else {
+        Router.push("/");
       }
     } catch (error) {
       console.log("Login.tsx error ", error);

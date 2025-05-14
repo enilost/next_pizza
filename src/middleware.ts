@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { verificationJwtToken } from "@/lib/utils";
 import { decode } from "jsonwebtoken";
 import { jwtVerify } from "jose";
-import { JVT_TOKEN_NAME } from "./constants/constants";
+import { JWT_TOKEN_NAME } from "./constants/constants";
 export async function middleware(request: NextRequest) {
+  console.log("middleware");
+  
   // стр логинов
   const authPages = ["/auth", "/login"];
   // стр защищенные
@@ -24,7 +26,7 @@ export async function middleware(request: NextRequest) {
   );
 
   // Получаем токен из куки
-  const token = request.cookies.get(JVT_TOKEN_NAME)?.value;
+  const token = request.cookies.get(JWT_TOKEN_NAME)?.value;
 
   // если путь ведет на логины
   if (isAuthPage) {
@@ -39,7 +41,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url),307);
   }
   // Если путь не ведет на логины и защищенные страницы
-  // то пропускаем дальше
+  // то пропускаем дальше без проверок
   const response = NextResponse.next();
   return response;
 }
@@ -53,7 +55,7 @@ export const config = {
     // "/login",
     // "/login/:path*",
 
-    // "/products",
+    // // "/products/:path*",
 
     // "/profile",
     // "/profile/:path*",
@@ -66,7 +68,8 @@ const authPagesHandler = async (
 ) => {
   if (!token) {
     // если токена нет, то пропускаем на стр авторизации
-    return NextResponse.next();
+    const response = NextResponse.next();
+    return response;
   }
   const decoded = await verificationJwtToken(
     token,
@@ -74,13 +77,13 @@ const authPagesHandler = async (
   );
   if (!decoded) {
     // если токен неверный, то удаляем токен и пропускаем дальше на авторизацию
-    // const response = NextResponse.redirect(new URL("/auth", request.url), 307);
     const response = NextResponse.next();
-    response.cookies.delete(JVT_TOKEN_NAME);
+    response.cookies.delete(JWT_TOKEN_NAME);
     return response;
   }
   // если токен верный, значит пользователь уже авторизован
   //  и не пускаем его на авторизацию, а редиректим на главную
+
   const response = NextResponse.redirect(new URL("/", request.url), 307);
   return response;
 };
@@ -101,9 +104,10 @@ const protectedPagesHandler = async (
   if (!decoded) {
     // если токен неверный, то удаляем токен и редиректим на авторизацию
     const response = NextResponse.redirect(new URL("/auth", request.url), 307);
-    response.cookies.delete(JVT_TOKEN_NAME);
+    response.cookies.delete(JWT_TOKEN_NAME);
     return response;
   }
   // если токен верный, то пропускаем на защищенную страницу
-  return NextResponse.next();
+  const response =NextResponse.next();
+  return response;
 };

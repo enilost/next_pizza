@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../../prisma/prisma-client";
 import { compareSync, hashSync } from "bcrypt";
 import { User } from "@prisma/client";
-import { createJwtToken, verifyTokenJWB as verificationJwtToken } from "@/lib/utils";
-import { JVT_TOKEN_NAME } from "@/constants/constants";
+import {
+  createJwtToken,
+  verifyTokenJWB as verificationJwtToken,
+} from "@/lib/utils";
+import { JWT_TOKEN_NAME } from "@/constants/constants";
+import { cookies } from "next/headers";
 
 export type IReturnUser = Omit<
   User,
@@ -13,7 +17,7 @@ export type IReturnUser = Omit<
   | "provider"
   | "providerId"
   | "verified"
-> &{_redirect?:string};
+> & { _redirect?: string };
 // : Promise<NextResponse<User> | NextResponse<{ message: string }>>
 export async function POST(
   req: NextRequest
@@ -21,7 +25,7 @@ export async function POST(
   // console.log('req: NextRequest ', req);
   // const user = await req.json();
   // console.log('req: NextRequest body ', user);
-  function redirectToHome(){
+  function redirectToHome() {
     let isRedirect = false;
     const redirectPathArray = ["/auth"];
     const referer = req.headers.get("referer");
@@ -104,7 +108,7 @@ export async function POST(
 
         const response = NextResponse.json(returnUser);
         response.cookies.set({
-          name: JVT_TOKEN_NAME,
+          name: JWT_TOKEN_NAME,
           value: token,
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
@@ -150,13 +154,13 @@ export async function POST(
           ...returnUser
         } = user;
         const token = jwtTok(returnUser);
-        if(redirectToHome()){
-            // @ts-ignore
-            returnUser._redirect = "/";
+        if (redirectToHome()) {
+          // @ts-ignore
+          returnUser._redirect = "/";
         }
         const response = NextResponse.json(returnUser);
         response.cookies.set({
-          name: JVT_TOKEN_NAME,
+          name: JWT_TOKEN_NAME,
           value: token,
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
@@ -214,13 +218,13 @@ export async function POST(
           ...returnUser
         } = user;
         const token = jwtTok(returnUser);
-        if(redirectToHome()){
-            // @ts-ignore
-            returnUser._redirect = "/";
+        if (redirectToHome()) {
+          // @ts-ignore
+          returnUser._redirect = "/";
         }
         const response = NextResponse.json(returnUser);
         response.cookies.set({
-          name: JVT_TOKEN_NAME,
+          name: JWT_TOKEN_NAME,
           value: token,
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
@@ -234,36 +238,41 @@ export async function POST(
       case "logout": {
         const response = NextResponse.json({ message: "Выход выполнен" });
 
-        response.cookies.delete(JVT_TOKEN_NAME);
+        response.cookies.delete(JWT_TOKEN_NAME);
         return response;
       }
 
       case "is_check_auth": {
-        const token = req.cookies.get(JVT_TOKEN_NAME);
+        const token = cookies().get(JWT_TOKEN_NAME)?.value;
+        // const token = req.cookies.get(JWT_TOKEN_NAME)?.value;
+        console.log("is_check_auth", token);
         if (!token) {
           return NextResponse.json(
-            { message: "Пользователь не авторизован" },
+            { message: "Токен не найден" },
             { status: 401 }
           );
         }
         if (!process.env.NEXT_AUTH_SECRET_JWT) {
           return NextResponse.json(
-            { message: "не удалось получить секретный ключ" },
+            { message: "Не удалось получить секретный ключ" },
             { status: 401 }
           );
         }
         const decodetToken = verificationJwtToken(
-          token.value,
+          token,
           process.env.NEXT_AUTH_SECRET_JWT
         );
         if (!decodetToken) {
-            const response = NextResponse.json(
-                { message: "Недействительный токен удален" },
-                { status: 401 }
-              );
-              response.cookies.delete('NextPizzaJwtToken');
-              return response;
+          const response = NextResponse.json(
+            { message: "Недействительный токен удален" },
+            { status: 401 }
+          );
+          console.log("попадаю в этот блок и пытаюсь удалить куку");
+
+          response.cookies.delete(JWT_TOKEN_NAME);
+          return response;
         }
+
         const user = await prisma.user.findUnique({
           where: {
             id: decodetToken.id,
@@ -271,12 +280,20 @@ export async function POST(
           },
         });
         if (!user) {
-          return NextResponse.json(
+          const response = NextResponse.json(
             { message: "не удалось найти данного пользователя" },
             { status: 401 }
           );
+          response.cookies.delete(JWT_TOKEN_NAME);
+          return response;
         }
-        // const isPassword = compareSync(decodetToken.password, user.password);
+
+        if (!user.verified) {
+          return NextResponse.json(
+            { message: "Пользователь не верифицирован" },
+            { status: 401 }
+          );
+        }
         const {
           password: pass,
           createdAt,
@@ -289,7 +306,7 @@ export async function POST(
         const newToken = jwtTok(returnUser);
         const response = NextResponse.json(returnUser);
         response.cookies.set({
-          name: JVT_TOKEN_NAME,
+          name: JWT_TOKEN_NAME,
           value: newToken,
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
@@ -298,7 +315,8 @@ export async function POST(
           path: "/",
         });
         return response;
-        // return NextResponse.json(decodetToken);
+
+
       }
       default:
         return NextResponse.json(

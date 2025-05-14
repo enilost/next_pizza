@@ -8,6 +8,7 @@ import { ArrowRight, ShoppingCart, User } from "lucide-react";
 import HeaderSearch from "../HeaderSearch/HeaderSearch";
 import Link from "next/link";
 import HeaderCart from "../HeaderCart/HeaderCart";
+import LoginButton from "../LoginButton/LoginButton";
 // import CartDrawer from "../CartDrawer/CartDrawer";
 interface HeaderProps {
   headerSeach?: boolean;
@@ -59,27 +60,7 @@ const Header: FunctionComponent<HeaderProps> = ({
 
           <div className={cn("flex items-center gap-2")}>
             {headerLogin &&
-              (isAuth ? (
-                <Link href={"/profile"} key={"profile"}>
-                  <Button
-                    variant={"outline"}
-                    className={cn(" flex items-center gap-1")}
-                  >
-                    <User size={"22px"} />
-                    Профиль
-                  </Button>
-                </Link>
-              ) : (
-                <Link href={"/login"} key={"login"}>
-                  <Button
-                    variant={"outline"}
-                    className={cn(" flex items-center gap-1")}
-                  >
-                    <User size={"22px"} />
-                    Войти
-                  </Button>
-                </Link>
-              ))}
+              <LoginButton/>}
             <div>
               {/* <Suspense> */}
               {headerCart && <HeaderCart />}

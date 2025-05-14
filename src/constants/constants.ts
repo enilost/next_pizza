@@ -222,5 +222,5 @@ export class CreatePrismaFilter {
   }
 }
 // /////////////////////////////////////////
-export const JVT_TOKEN_NAME = "NextPizzaJwtToken";
+export const JWT_TOKEN_NAME = "NextPizzaJwtToken";
 

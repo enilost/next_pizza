@@ -5,10 +5,11 @@ import ProguctCardGroup from "@/components/ProguctCardGroup/ProguctCardGroup";
 import { Title } from "@/components/Title/Title";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
-import apiClient from "@/../services/apiClient";
+
 import prisma from "@/../../prisma/prisma-client";
 import { CreatePrismaFilter, I_FILTER_PARAMS } from "@/constants/constants";
 import { Prisma } from "@prisma/client";
+
 
 export type CategoryWithProducts = Prisma.CategoryGetPayload<{
   include: {
@@ -38,7 +39,8 @@ export default async function Home({
     console.log("(main)/page.tsx error", err);
     categories = [];
   }
-
+  // const user = await checkAuth();
+  // console.log("User in RootLayout:", user);
   // console.log("categories", JSON.stringify(categories, null, 2));
 
   return (

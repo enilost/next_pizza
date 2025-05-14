@@ -6,6 +6,8 @@ import Container from "@/components/Container/Container";
 import { Modal } from "@/components/Modal/Modal";
 import PersonalInfo from "@/components/PersonalInfo/PersonalInfo";
 import LoginRegistration from "@/components/LoginRegistration/LoginRegistration";
+import { cookies } from "next/headers";
+import { JWT_TOKEN_NAME } from "@/constants/constants";
 
 interface ProductIdProps {
   params: { id: string };
@@ -31,7 +33,8 @@ const ProductId: FunctionComponent<ProductIdProps> = async ({
   //   if (!product) {
   //     return notFound();
   //   }
-  
+    const token  = cookies().get(JWT_TOKEN_NAME)?.value;
+    console.log('перехваченный роут токен', token);
   return (
     <>
       <Modal>

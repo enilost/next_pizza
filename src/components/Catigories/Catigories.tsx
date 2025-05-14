@@ -19,8 +19,7 @@ const Catigories: FunctionComponent<CatigoriesProps> = ({
   categories = [],
   // activeIndex = 0,
 }) => {
-  // const [ancor, setAncor] = useHash();
-  console.log(categories);
+
   
   const [activeCategoryId, setActiveCategoryId] = useStoreCategory((state) => [
     state.activeCategoryId,

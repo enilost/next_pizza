@@ -1,6 +1,10 @@
 import LoginRegistration from "@/components/LoginRegistration/LoginRegistration";
 import { Title } from "@/components/Title/Title";
+import { JWT_TOKEN_NAME } from "@/constants/constants";
+import { verifyTokenJWB } from "@/lib/utils";
 import { Metadata } from "next";
+import { cookies, headers } from "next/headers";
+import { redirect, usePathname } from "next/navigation";
 import { FunctionComponent } from "react";
 export const metadata: Metadata = {
   title: "Next14 Pizza | вход / регистрация",
@@ -8,14 +12,36 @@ export const metadata: Metadata = {
 };
 interface LoginPageProps {}
 
-const LoginPage: FunctionComponent<LoginPageProps> = async() => {
+const LoginPage: FunctionComponent<LoginPageProps> = async () => {
+  const token = cookies().get(JWT_TOKEN_NAME)?.value;
+  console.log("логин роут токен", token);
+  let isAuth = false;
+  if (token) {
+    const isAuth = verifyTokenJWB(token, process.env.NEXT_AUTH_SECRET_JWT!);
+    if (isAuth) {
+      redirect("/");
+    }
+  }
+  const headersList = headers();
+  console.log("headersList", headersList);
+  const referer = headersList.get('referer') || '';
+  const host = headersList.get('host') || '';
+  let pathname = '';
+  if (referer) {
+    pathname = new URL(referer).pathname;
+  } else {
+    // Если referer недоступен, можно попробовать построить путь из других данных
+    // Это не всегда надежно
+    pathname = headersList.get('x-invoke-path') || '';
+  }
+  console.log("pathname", pathname);
+  
   return (
     <>
-          <div className="w-[800px] max-w-[100%] mx-auto my-7 p-5 text-center">
-    <Title>Авторизация</Title>
-    </div>
-  
-      
+      <div className="w-[800px] max-w-[100%] mx-auto my-7 p-5 text-center">
+        <Title>Авторизация</Title>
+      </div>
+
       <LoginRegistration></LoginRegistration>
     </>
   );

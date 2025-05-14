@@ -81,7 +81,7 @@ const CartDrawer: FunctionComponent<CartDrawerProps> = ({
   //   return () => window.removeEventListener('storage', handleStorage);
   // }, []);
   // bg-[hsl(20,100%,50%,0.2)]
-  console.log("cartdrawer");
+  // console.log("cartdrawer");
 
   const totalCount = items.reduce((acc, item) => acc + item.quantity, 0);
   return (

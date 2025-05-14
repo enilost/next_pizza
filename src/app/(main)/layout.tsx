@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header/Header";
-import { cookies } from "next/headers";
-import { verifyTokenJWB } from "@/lib/utils";
+// import { cookies } from "next/headers";
+// import { verifyTokenJWB } from "@/lib/utils";
+
+// export const dynamic = 'force-dynamic';
+// export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Next14 Pizza | главная",
@@ -18,19 +21,19 @@ export default function MainLayout(
   }>,
   ...props: any
 ) {
-  const cookieStore = cookies();
-  let isAuth = false;
-  const token = cookieStore.get("NextPizzaJwtToken")?.value;
-  if (token) {
-    const decode = verifyTokenJWB(token, process.env.NEXT_AUTH_SECRET_JWT!);
-    if (decode) {
-      isAuth = true;
-    }
-  }
+  // const cookieStore = cookies();
+  // let isAuth = false;
+  // const token = cookieStore.get("NextPizzaJwtToken")?.value;
+  // if (token) {
+  //   const decode = verifyTokenJWB(token, process.env.NEXT_AUTH_SECRET_JWT!);
+  //   if (decode) {
+  //     isAuth = true;
+  //   }
+  // }
   return (
     <>
-      <Header isAuth={isAuth}></Header>
-      <main // className={"min-h-screen"}
+      <Header ></Header>
+      <main // className={"min-h-screen"} isAuth={isAuth}
       >
         {children}
       </main>

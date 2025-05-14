@@ -45,25 +45,53 @@ interface DadataAddressProps {
 const DadataAddress: FunctionComponent<DadataAddressProps> = ({
   className,
 }) => {
-  // значение из инпута
-  const [queryAddress, setQueryAddress] = useState("");
   // фокус на инпуте
   const [isFocused, setIsFocused] = useState(false);
   // список полученных адесов дадаты
-  const [dadataAddresses, setDadataAddresses] = useState<I_dadataAddress[]>([]);
+  const [dadataListAddresses, setDadataListAddresses] = useState<
+    I_dadataAddress[]
+  >([]);
   const [dadataCatchError, setDadataCatchError] = useState<Error | null>(null);
-  // выбраннйы адресс из списка
-  const [selectedAddress, setSelectedAddress] =
-    useState<I_dadataAddress | null>(null);
   // загрузка
   const [isLoading, setIsLoading] = useState(false);
-  // валидация
-  const [validError, setValidError] = useState<null | string>(null);
+
   const firstRender = useRef(true);
   const addressesRef = useRef<HTMLDivElement>(null);
 
   const id = useId();
   const label = "(Обл./край),город, улица, дом, квартира(если есть)";
+
+  // методы глобального стора юзера, для записи в него ыбранного адреса и ошибки валидации
+  const [
+    queryInputAddress,
+    setQueryInputAddress,
+
+    userSelectedAddress,
+    setUserSelectedAddress,
+
+    userValidErrorAddress,
+    setUserValidErrorAddress,
+
+    // triggerForGetAddressData,
+  ] = useStoreWithEqualityFn(
+    useStoreUser,
+    (state) => [
+      state.queryInputAddress,
+      state.setQueryInputAddress,
+
+      state.address,
+      state.setAddress,
+
+      state.validErrorAddress,
+      state.setValidErrorAddress,
+      // триггер для принудительного ререндера, если с инпутом не взаимодействовали
+      // state.triggerForGetAddressData,
+    ],
+    (prev, next) => false
+    // prev[2] === next[2] &&
+    // next[3]?.value === prev[3]?.value &&
+    // next[4] === prev[4]
+  );
 
   const getAddresses: (controller: AbortController) => Promise<{
     suggestions: I_dadataAddress[];
@@ -79,7 +107,7 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
     let url =
       "http://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address";
     let token = process.env.NEXT_PUBLIC_DADATA_API_KEY;
-    let query = queryAddress;
+    let query = queryInputAddress;
     const mode = "cors" as const;
     let options = {
       method: "POST",
@@ -99,7 +127,7 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
 
     return new Promise((resolve, reject) => {
       // если в инпуте меньше 2 символов то не делать запрос
-      if (queryAddress.length < MIN) {
+      if (queryInputAddress.length < MIN) {
         resolve({ suggestions: [] });
         return;
       }
@@ -117,14 +145,7 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
         .catch((error) => reject(error));
     });
   };
-  useEffect(() => {
-    if (userAddress) {
-      setSelectedAddress(userAddress);
-      setQueryAddress(userAddress.value);
-    }
-    if (userValidErrorAddress) setValidError(userValidErrorAddress);
-  }, []);
-  // делает запрос на подсказки при вводе адреса
+
   useEffect(() => {
     // делает запрос на подсказки при вводе адреса
     if (firstRender.current) return;
@@ -135,13 +156,13 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
 
       getAddresses(controller)
         .then((result) => {
-          setDadataAddresses(result.suggestions.map((item) => item));
+          setDadataListAddresses(result.suggestions.map((item) => item));
         })
         .catch((error) => {
           console.log("component DadataAddress useEffect error - ", error);
           setDadataCatchError(error);
-          setDadataAddresses([]);
-          setSelectedAddress(null);
+          setDadataListAddresses([]);
+          // setSelectedAddress(null);
         })
         .finally(() => {
           setIsLoading(false);
@@ -151,14 +172,14 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
       controller.abort();
       clearTimeout(bounceTimeout);
     };
-  }, [queryAddress]);
+  }, [queryInputAddress]);
 
-  // цвет фона инпута валидации
+  // // цвет фона инпута валидации
   const bgColorInput = () => {
     let cssClass = "";
-    if (validError) {
+    if (userValidErrorAddress) {
       cssClass = "bg-red-200";
-    } else if (selectedAddress) {
+    } else if (userSelectedAddress && queryInputAddress == userSelectedAddress.value) {
       cssClass = "bg-green-200";
     }
     return cssClass;
@@ -167,118 +188,87 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
   // валидация, запускается в юзэффекте при смене инпута, выбранного адреса и ошибки соединения
   const validation = () => {
     // на обязательность
-    if (queryAddress.length == 0) {
-      validError !== requred && setValidError(requred);
+    if (queryInputAddress.length == 0) {
+      userValidErrorAddress !== requred && setUserValidErrorAddress(requred);
       return;
     }
     // на мин длинну
-    if (queryAddress.length < MIN) {
-      validError !== minLength && setValidError(minLength);
+    if (queryInputAddress.length < MIN) {
+      userValidErrorAddress !== minLength &&
+        setUserValidErrorAddress(minLength);
       return;
     }
     // на ошибку запроса
     if (dadataCatchError !== null) {
-      validError !== catchError && setValidError(catchError);
+      userValidErrorAddress !== catchError &&
+        setUserValidErrorAddress(catchError);
       return;
     }
     // если не выбран адрес из списка
-    if (!selectedAddress) {
-      validError !== noChoice && setValidError(noChoice);
+    if (!userSelectedAddress) {
+      userValidErrorAddress !== noChoice && setUserValidErrorAddress(noChoice);
       return;
     }
     // если адрес без дома и\или квартиры
     if (
-      selectedAddress &&
-      !FIAS_LEVELS.includes(selectedAddress.data.fias_level)
+      userSelectedAddress &&
+      !FIAS_LEVELS.includes(userSelectedAddress.data.fias_level)
     ) {
-      validError !== notFullAddress && setValidError(notFullAddress);
+      userValidErrorAddress !== notFullAddress &&
+        setUserValidErrorAddress(notFullAddress);
       return;
     }
-    validError !== null && setValidError(null);
+    userValidErrorAddress !== null && setUserValidErrorAddress(null);
   };
 
   // обработка инпута
   const handleChangeInput = (e: ChangeEvent<HTMLInputElement>) => {
-    setQueryAddress(e.target.value);
-    // if (validError) {
-    //   // при изменении инпута очищает ошибку валидации если она есть
-    //   setValidError(null);
-    // }
+    setQueryInputAddress(e.target.value);
+    if (userValidErrorAddress) {
+      // при изменении инпута очищает ошибку валидации если она есть
+      setUserValidErrorAddress(null);
+    }
     if (dadataCatchError !== null) {
       // при изменении инпута очищает ошибку запроса если она есть
       setDadataCatchError(null);
     }
-    if (selectedAddress) {
+    if (userSelectedAddress) {
       // при изменении инпута очищает выбранный адрес если он есть
-      setSelectedAddress(null);
+      setUserSelectedAddress(null);
     }
   };
 
-  // обработка выбора адреса из списка
+  // // обработка выбора адреса из списка
   const handleChoiseAddress = (item: I_dadataAddress) => {
-    setSelectedAddress(item);
-    setQueryAddress(item.value);
-    // setAddress(item);
+    setUserSelectedAddress(item);
+    setQueryInputAddress(item.value);
+    //   // setAddress(item);
   };
 
+  // делает запрос на подсказки при вводе адреса
+
   // юзэффект валидации
+  // срабатывает после изменения инпута, выбранного адреса и ошибки соединения
   useEffect(() => {
     // юзэффект валидации
     if (firstRender.current) return;
     validation();
-  }, [queryAddress, selectedAddress, dadataCatchError]);
-
-  // методы глобального стора юзера, для записи в него ыбранного адреса и ошибки валидации
-  const [
-    setUserAddress,
-    setUserValidErrorAddress,
-    triggerForGetAddressData,
-    userAddress,
-    userValidErrorAddress,
-  ] = useStoreWithEqualityFn(
-    useStoreUser,
-    (state) => [
-      state.setAddress,
-      state.setValidErrorAddress,
-      // триггер для принудительного ререндера, если с инпутом не взаимодействовали
-      state.triggerForGetAddressData,
-      state.address,
-      state.validErrorAddress,
-    ],
-    (prev, next) => prev[2] === next[2] && next[3]?.value === queryAddress
-  );
-
+  }, [queryInputAddress, userSelectedAddress, dadataCatchError]);
   // юзэффект для принудительного ререндера, если с инпутом не взаимодействовали
-  useEffect(() => {
-    // юзэффект для принудительного ререндера, если с инпутом не взаимодействовали
-    // он запустит валидацию, если с инпутом не взаимодействовали
-    // а после валидации сработает юзэффект отправки данных в стор
-    if (firstRender.current) return;
-    validation();
-  }, [triggerForGetAddressData]);
+  // useEffect(() => {
+  //   // юзэффект для принудительного ререндера, если с инпутом не взаимодействовали
+  //   // он запустит валидацию, если с инпутом не взаимодействовали
+  //   // а после валидации сработает юзэффект отправки данных в стор
+  //   // if (firstRender.current) return;
+  //   // validation();
+  // }, [triggerForGetAddressData]);
 
-  // юзэффект для отправки адреса и ошибки в стор
   useEffect(() => {
-    // юзэффект для отправки адреса и ошибки в стор
-    // при изменении валидации или выбранного адреса он отправляет их в стор
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
-    setUserAddress(selectedAddress);
-    setUserValidErrorAddress(validError);
-  }, [selectedAddress, validError]);
-
-
-  useEffect(() => {
-    // много костылей из-за собственного стейта
-    // можно потом переделать компонент полностью на стейт зустанда
-    // без собственного стейта
-    if (userAddress && userAddress?.value !== queryAddress) {
-      setQueryAddress(userAddress.value);
-      setSelectedAddress(userAddress);
-    }
-  }, [userAddress]);
+  }, []);
   return (
     <div
       className={cn(
@@ -288,7 +278,7 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
       )}
     >
       {/* <p>{'строка дебага - '+ address?.value + " , " + address?.data.fias_level}</p> */}
-      {queryAddress.length > 0 && (
+      {queryInputAddress.length > 0 && (
         <label
           htmlFor={id}
           className="block text-sm font-medium text-gray-700 pl-3 cursor-pointer"
@@ -302,13 +292,13 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
         id={id}
         className={cn(
           "rounded-2xl outline-none w-full bg-gray-200 pl-3",
-          queryAddress.length > 0 ? "" : "mt-5",
-          validError ?? "mb-6",
+          queryInputAddress.length > 0 ? "" : "mt-5",
+          userValidErrorAddress ?? "mb-6",
           bgColorInput()
         )}
         placeholder={label}
         type="search"
-        value={queryAddress}
+        value={queryInputAddress}
         onChange={handleChangeInput}
         onFocus={(e) => {
           setIsFocused(true);
@@ -319,15 +309,18 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
           //   // при клике на выборе адреса в списке инпут не теряет фокус
           //   return;
           // }
+
           setIsFocused(false);
-          validation();
+          // validation();
         }}
         autoComplete="off"
       />
       {/* </form> */}
-      {validError && <p className="pl-3 text-red-400">{validError}</p>}
+      {userValidErrorAddress && (
+        <p className="pl-3 text-red-400">{userValidErrorAddress}</p>
+      )}
 
-      {queryAddress.length > 0 && (
+      {queryInputAddress.length > 0 && (
         <div
           ref={addressesRef}
           id="addresses"
@@ -337,8 +330,8 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
           )}
         >
           <div className=" max-h-inherit overflow-y-auto scrl_glbl">
-            {dadataAddresses.length ? (
-              dadataAddresses.map((item, index) => (
+            {dadataListAddresses.length ? (
+              dadataListAddresses.map((item, index) => (
                 <p
                   tabIndex={0}
                   className={cn(
@@ -352,8 +345,8 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      handleChoiseAddress(item);
-                      setIsFocused(false);
+                      // handleChoiseAddress(item);
+                      // setIsFocused(false);
                     }
                   }}
                 >
