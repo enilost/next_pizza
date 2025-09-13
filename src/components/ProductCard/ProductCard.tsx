@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 // import { Product, ProductItem } from "@prisma/client";
 import CONSTANTS_API from "../../../services/constantsApi";
 // import { useRouter } from "next/navigation";
+import style from "./style.module.css";
 export interface ProductCardProps {
   id: number;
   name: string;
@@ -33,12 +34,14 @@ const ProductCard: FunctionComponent<ProductCardProps> = ({
         href={path}
         scroll={false}
         // className="flex flex-col h-[100%]"
-        className="flex justify-center p-6 bg-secondary rounded-lg h-[260px]"
+        className={`flex justify-center items-center p-6 bg-secondary rounded-lg h-[260px] ${style["link--img_rotate_scale"]} overflow-hidden`}
       >
+        {/* transform hover:rotate-3 hover:scale-105 */}
         <Image
           src={imageUrl || ""}
           alt={name}
-          className=""
+          // className=""
+          className="transition duration-300 ease-in-out img_rotate_scale"
           width={215}
           height={215}
         ></Image>
@@ -55,24 +58,34 @@ const ProductCard: FunctionComponent<ProductCardProps> = ({
         <p className="text-sm text-gray-400 flex-grow ">{description}</p>
       )}
 
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex justify-between items-center mt-4 22">
         <span className="text-[20px]">
           от <b>{price} ₽</b>
         </span>
 
-        <Link href={path} scroll={false}>
+        <Link href={path} scroll={false} className="link--img_rotate_scale ">
           <Button
             variant={"secondary"}
-            className="text-base font-bold"
+            className="text-base font-bold "
             // onClick={() => {
             //   Router.push(path, { scroll: false });
             // }}
           >
-            <Plus className="w-5 h-5 mr-1"></Plus>
+            <Plus className="w-5 h-5 mr-1 "></Plus>
             добавить
           </Button>
         </Link>
       </div>
+      {/* <style>
+        {`
+          .link--img_rotate_scale:hover  {
+            img {
+              transform: rotate(11deg) scale(1.2);
+            }
+          }
+
+        `}
+      </style> */}
     </div>
   );
 };

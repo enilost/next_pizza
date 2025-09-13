@@ -10,7 +10,7 @@ interface CustomInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   }
   const CustomInput: FunctionComponent<CustomInputProps> = memo(
     ({ mask, label, validError, regexpReplace, ...props }) => {
-      console.log("CustomInput");
+
       return (
         <div>
           {props.value && (
@@ -70,4 +70,5 @@ interface CustomInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
       );
     }
   );
+  CustomInput.displayName = "CustomInput";
   export default CustomInput;

@@ -1,4 +1,4 @@
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, Suspense, useState } from "react";
 // import prisma from "@/../../prisma/prisma-client";
 // import { notFound } from "next/navigation";
 import Container from "@/components/Container/Container";
@@ -10,35 +10,16 @@ import { cookies } from "next/headers";
 import { JWT_TOKEN_NAME } from "@/constants/constants";
 
 interface ProductIdProps {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+
 }
 
-const ProductId: FunctionComponent<ProductIdProps> = async ({
-  params,
-  searchParams,
-}) => {
-  // console.log("searchParams", searchParams);
-  // console.log("params", params);
-  //   const product = await prisma.product.findUnique({
-  //     where: {
-  //       id: +params.id,
-  //     },
-  //     include: {
-  //       ingredients: true,
-  //       items: true,
-  //     },
-  //   });
+const ProductId: FunctionComponent<ProductIdProps> = async () => {
 
-  //   if (!product) {
-  //     return notFound();
-  //   }
-    const token  = cookies().get(JWT_TOKEN_NAME)?.value;
-    console.log('перехваченный роут токен', token);
   return (
     <>
       <Modal>
-      <LoginRegistration></LoginRegistration>
+        <Suspense>
+      <LoginRegistration></LoginRegistration></Suspense>
         {/* <div>modal карточка продукта {params.id}</div>
         <pre>{JSON.stringify(product, null, 2)}</pre> */}
       </Modal>

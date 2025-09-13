@@ -25,13 +25,13 @@ async function checkToken() {
     return tokenCheckPromise;
   }
 
-  console.log("Checking auth token..."); // Для отладки
+  // console.log("Checking auth token..."); // Для отладки
 
   // Создаем новый промис для проверки токена
   tokenCheckPromise = auth
     .isCheckAuth()
     .then((user) => {
-      console.log("Token check successful, user is authenticated:", user);
+      // console.log("Token check successful, user is authenticated:", user);
 
       // Обновляем состояние авторизации в сторе
       const store = useStoreUser.getState();
@@ -43,7 +43,7 @@ async function checkToken() {
       return user;
     })
     .catch((error) => {
-      console.log("оштбка токена", error);
+      // console.log("оштбка токена", error);
 
       // Если проверка не удалась, обновляем состояние в сторе
       const store = useStoreUser.getState();
@@ -86,13 +86,13 @@ function shouldCheckToken(url: string | undefined): boolean {
  * Вызывается один раз при инициализации приложения
  */
 export function setupAxiosInterceptors() {
-    console.log('setupAxiosInterceptors');
+    // console.log('setupAxiosInterceptors');
 
     
   // Interceptor для запросов (выполняется перед отправкой запроса)
   axiosInst.interceptors.request.use(async (config) => {
     const now = Date.now();
-    console.log('config', config);
+    // console.log('config', config);
     // Проверяем, нужно ли проверить токен:
     // 1. Прошло достаточно времени с последней проверки
     // 2. URL в списке исключений
@@ -104,7 +104,7 @@ export function setupAxiosInterceptors() {
     ) {
       try {
         // Проверяем токен перед отправкой запроса
-        console.log('Проверяем токен перед отправкой запроса ' , config.url);
+        // console.log('Проверяем токен перед отправкой запроса ' , config.url);
         
         await checkToken();
       } catch (error) {
@@ -120,5 +120,6 @@ export function setupAxiosInterceptors() {
     return config;
   });
 }
-// интерцептор не устанавливается, это на всяк случай
+// интерцептор не устанавливается, этот код с проверками токена отключен
+// а написан просто на всяк случай
 // setupAxiosInterceptors()

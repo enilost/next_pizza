@@ -1,7 +1,7 @@
 "use client";
 import Container from "@/components/Container/Container";
-import { Modal } from "@/components/Modal/Modal";
-import { Loader, Loader2 } from "lucide-react";
+
+import {  Loader2 } from "lucide-react";
 import { FunctionComponent, useEffect } from "react";
 
 interface LoadProps {
@@ -10,11 +10,11 @@ interface LoadProps {
 
 const Load: FunctionComponent<LoadProps> = ({ params }) => {
   useEffect(() => {
-    console.log("Loading mount");
+
     const body = document.body;
     body.style.overflow = "hidden";
     return () => {
-      console.log("Loading unmount");
+
       body.style.overflow = "auto";
     };
   }, []);

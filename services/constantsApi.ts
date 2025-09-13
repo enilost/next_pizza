@@ -4,5 +4,6 @@
     productItems="product-items",
     cart="cart",
     auth="auth",
+    stories="stories",
 }
 export default CONSTANTS_API

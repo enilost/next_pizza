@@ -1,7 +1,13 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import prisma from "./prisma-client";
 import { hashSync } from "bcrypt";
-import { categories, ingredients, product } from "./constants";
+import {
+  categories,
+  ingredients,
+  product,
+  stories,
+  storyItems,
+} from "./constants";
 const randomDecimalNumber = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min) * 10 + min * 10) / 10;
 };
@@ -26,30 +32,29 @@ async function main() {
     await down();
     await up();
   } catch (error) {
-    console.log("error");
-    console.log(error);
+    console.log("error seed.ts/main", error);
   }
 }
 async function up() {
   await prisma.user.createMany({
     data: [
       {
-        fullName: "user",
+        fullName: "user user",
         email: "user@test.ru",
         password: hashSync("123123", 10),
         verified: new Date(),
         role: "USER",
-        phone: "1-111-111-11-11",
-        address: '{"data":{"fias_level":"8"},"value":"Москва"}',
+        phone: "+7 (111) 111-11-11",
+        address: { data: { fias_level: "8" }, value: "Москва" },
       },
       {
-        fullName: "admin",
+        fullName: "admin admin",
         email: "admin@test.ru",
         password: hashSync("123123", 10),
         verified: new Date(),
         role: "ADMIN",
-        phone: "2-222-222-22-22",
-        address: '{"data":{"fias_level":"8"},"value":"Москва"}',
+        phone: "+7 (222) 222-22-22",
+        address: { data: { fias_level: "8" }, value: "Москва" },
       },
     ],
   });
@@ -68,7 +73,8 @@ async function up() {
     data: {
       name: "Пепперони фреш",
       imageUrl:
-        "https://media.dodostatic.net/image/r:233x233/11EE7D61304FAF5A98A6958F2BB2D260.webp",
+        // "https://media.dodostatic.net/image/r:233x233/11EE7D61304FAF5A98A6958F2BB2D260.webp",
+        "/pizza/PizzaPepperoniFresh.webp",
       categoryId: 1,
       ingredients: {
         connect: ingredients.slice(0, 5),
@@ -79,7 +85,8 @@ async function up() {
     data: {
       name: "Сырная",
       imageUrl:
-        "https://media.dodostatic.net/image/r:233x233/11EE7D610CF7E265B7C72BE5AE757CA7.webp",
+        // "https://media.dodostatic.net/image/r:233x233/11EE7D610CF7E265B7C72BE5AE757CA7.webp",
+        "/pizza/PizzaSirnaya.webp",
       categoryId: 1,
       ingredients: {
         connect: ingredients.slice(5, 10),
@@ -91,7 +98,8 @@ async function up() {
     data: {
       name: "Чоризо фреш",
       imageUrl:
-        "https://media.dodostatic.net/image/r:584x584/11EE7D61706D472F9A5D71EB94149304.webp",
+        // "https://media.dodostatic.net/image/r:584x584/11EE7D61706D472F9A5D71EB94149304.webp",
+        "/pizza/PizzaChorizoFresh.webp",
       categoryId: 1,
       ingredients: {
         connect: ingredients.slice(10, 40),
@@ -225,6 +233,14 @@ async function up() {
       },
     },
   });
+
+  await prisma.story.createMany({
+    data: stories,
+  });
+
+  await prisma.storyItem.createMany({
+    data: storyItems,
+  });
 }
 async function down() {
   await prisma.$executeRaw`TRUNCATE TABLE "User" RESTART IDENTITY CASCADE`;
@@ -234,6 +250,8 @@ async function down() {
   await prisma.$executeRaw`TRUNCATE TABLE "Ingredient" RESTART IDENTITY CASCADE`;
   await prisma.$executeRaw`TRUNCATE TABLE "Cart" RESTART IDENTITY CASCADE`;
   await prisma.$executeRaw`TRUNCATE TABLE "CartItem" RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE TABLE "Story" RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE TABLE "StoryItem" RESTART IDENTITY CASCADE`;
   // await prisma.user.deleteMany({});
 }
 main()

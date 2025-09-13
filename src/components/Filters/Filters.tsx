@@ -215,7 +215,7 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
     }
   };
   useEffect(() => {
-    console.log("useEffect 1 filter mounted", searchString);
+    // console.log("useEffect 1 filter mounted", searchString);
     //маунтед компонента
     // загружает все списки, типы галочек
     // и устанавливает чекбоксы, если они есть в серчпараметрах урла
@@ -286,10 +286,10 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
     if (firstLoading) {
       return;
     }
-    // console.log("useEffect 2 createSearchParamsString");
+
 
     const newsearchParams = createSearchParamsString();
-    // console.log("newsearchParams", newsearchParams);
+
 
     setSearchString((prev) => newsearchParams);
   }, [price, ingredients, sizesArr, pizzaTypesArr, firstLoading]);
@@ -345,7 +345,7 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
     if (firstLoading) {
       return;
     }
-    // console.log("useEffect 3 searchParams.toString()");
+
 
     if (searchString !== searchParams.toString()) {
       // setAllCheckUrl();
@@ -358,13 +358,13 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
     if (firstLoading) {
       return;
     }
-    // console.log("useEffect 4 searchString - ", searchString);
+
     // если сгенерированная с помощью фильтров серч-строка не равна серч-строке в урле
     // то переходим на новую страницу через setTimeout
     if (searchString !== searchParams.toString()) {
       timeouRouterPush.current = setTimeout(() => {
         // таймаут удаляется в ретерне
-        // console.log("timeouRouterPush");
+
         Router.replace(
           //push replace
           "/" + searchString.length ? "?" + searchString : "",
@@ -413,7 +413,7 @@ const Filters: FunctionComponent<FiltersProps> = ({ className }) => {
   }, [pathName]);
 
   const setAllCheckUrl = () => {
-    console.log("setAllCheckUrl");
+    // console.log("setAllCheckUrl");
     // заполняет стейт из юрл строки,
     // просто альтернативныцй неиспользуемый метод
 

@@ -3,7 +3,7 @@ import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
-import CheckAuth, { RouteGuard } from "@/components/CheckAuth/CheckAuth";
+import CheckAuth from "@/components/CheckAuth/CheckAuth";
 
 // import '../middleware.ts';
 const nunito = Nunito({
@@ -23,7 +23,6 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <CheckAuth />
       {/* <RouteGuard/> */}
       <body
         className={
@@ -32,8 +31,24 @@ export default async function RootLayout({
         }
       >
         {/* <pre>{JSON.stringify(user, null, 2)}</pre> */}
+        <CheckAuth></CheckAuth>
         {children}
+
+        <div className="modalwind relative z-20" id="modal_container"></div>
         <Toaster />
+
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+        try {
+          history.scrollRestoration = 'manual';
+        } catch (e) {
+          console.error('Failed to set scroll restoration:', e);
+        }
+          window.scrollTo(0, 0);
+        `,
+          }}
+        ></script>
       </body>
     </html>
   );

@@ -87,10 +87,10 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
       // триггер для принудительного ререндера, если с инпутом не взаимодействовали
       // state.triggerForGetAddressData,
     ],
-    (prev, next) => false
-    // prev[2] === next[2] &&
-    // next[3]?.value === prev[3]?.value &&
-    // next[4] === prev[4]
+    (prev, next) =>// false
+    prev[0] === next[0] &&
+    next[2]?.value === prev[2]?.value &&
+    next[4] === prev[4]
   );
 
   const getAddresses: (controller: AbortController) => Promise<{
@@ -255,14 +255,8 @@ const DadataAddress: FunctionComponent<DadataAddressProps> = ({
     validation();
   }, [queryInputAddress, userSelectedAddress, dadataCatchError]);
   // юзэффект для принудительного ререндера, если с инпутом не взаимодействовали
-  // useEffect(() => {
-  //   // юзэффект для принудительного ререндера, если с инпутом не взаимодействовали
-  //   // он запустит валидацию, если с инпутом не взаимодействовали
-  //   // а после валидации сработает юзэффект отправки данных в стор
-  //   // if (firstRender.current) return;
-  //   // validation();
-  // }, [triggerForGetAddressData]);
 
+  
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;

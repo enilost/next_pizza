@@ -14,8 +14,7 @@ const ProductId: FunctionComponent<ProductIdProps> = async ({
   params,
   searchParams,
 }) => {
-  // console.log("searchParams", searchParams);
-  // console.log("params", params);
+
   const product = await prisma.product.findUnique({
     where: {
       id: +params.id,

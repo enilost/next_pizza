@@ -3,27 +3,28 @@ import prisma from "../../../../prisma/prisma-client";
 import { ICart } from "../../../../services/cart";
 
 import { CartAndItemsArg } from "@/store/cart";
+import { CART_TOKEN_NAME } from "@/constants/constants";
+import { createCookie, deleteCookie } from "@/lib/utils";
 
 export async function GET(
   req: NextRequest,
   res: NextResponse
 ): Promise<NextResponse<ICart> | NextResponse<{ message: string }>> {
-
   let typeReq = req.nextUrl.searchParams.get("type") as CartAndItemsArg | null;
 
   // ищет токен в куках
   // если токена нет - создает новый и передает флаг false
   // если токен есть - передает флаг true
   function tokenFunc(): [string, boolean] {
-    let token = req.cookies.get("cartNextPizzaToken")?.value;
+    let token = req.cookies.get(CART_TOKEN_NAME)?.value;
     if (!token) {
       // .. создать токен 012c77ff-a02a-4de7-8589-25dd0e6f2ffa     48
       token = crypto.randomUUID();
       // поместить его в куки
-      req.cookies.set("cartNextPizzaToken", token);
+      // req.cookies.set(CART_TOKEN_NAME, token);
       // сразу забрать из кукисов
       // @ts-ignore
-      token = req.cookies.get("cartNextPizzaToken").value;
+      // token = req.cookies.get(CART_TOKEN_NAME).value;
       return [token, false];
     }
     return [token, true];
@@ -67,7 +68,7 @@ export async function GET(
   // тогда он создает корзину с этим уникальным новым токеном
   // и возвращает корзину и токен
   const whileCart = async (token: string) => {
-    let limit = 0;// лимит цикла
+    let limit = 0; // лимит цикла
     let whileCriterion = true;
     let returnCart: ICart | null = null;
     // let returnIsTotenFinded: boolean //= flagTokenFinded;
@@ -76,7 +77,7 @@ export async function GET(
       limit += 1;
       returnCart = await findFirstCart(returnToken);
       if (returnCart) {
-        req.cookies.delete("cartNextPizzaToken");
+        // req.cookies.delete(CART_TOKEN_NAME);
         returnToken = tokenFunc()[0];
       } else {
         returnCart = await createCart(returnToken);
@@ -86,7 +87,7 @@ export async function GET(
     return [returnCart, returnToken] as [
       ICart,
       // boolean,
-      string
+      string,
     ];
   };
   try {
@@ -105,30 +106,28 @@ export async function GET(
         cart = await findFirstCart(token);
         if (cart) {
           // если найдена, то вернуть корзину и перезаписать кукис
-          return NextResponse.json(cart, {
-            headers: {
-              "Set-Cookie": `cartNextPizzaToken=${token}; Max-Age=360000;`, //Max-Age=2592000
-            },
-          });
+          const response = NextResponse.json(cart);
+          response.cookies.set(createCookie(CART_TOKEN_NAME, token));
+          return response;
         } else {
           // если не найдена, то вернуть пустую корзину без создания ее в бд
-          return NextResponse.json({ items: [] } as unknown as ICart);
+          const response = NextResponse.json({ items: [] } as unknown as ICart);
+          // и удалить куку по которой не найдена корзина
+          deleteCookie(response, CART_TOKEN_NAME);
+          return response;
         }
         break;
       case "create": // если только создать корзину
-      
         // нам не важно найден токен в куках или создан новый
         // тк мы должны создать новую корзину
         // главное, чтоб карзины с таким токеном уже не было в бд
 
         [cart, token] = await whileCart(token);
-        
+
         // отправляю корзину и устанавливаю созданный токен в куки
-        return NextResponse.json(cart, {
-          headers: {
-            "Set-Cookie": `cartNextPizzaToken=${token}; Max-Age=360000;`, //Max-Age=2592000
-          },
-        });
+        const response = NextResponse.json(cart);
+        response.cookies.set(createCookie(CART_TOKEN_NAME, token));
+        return response;
         break;
       case "findOrCreate":
       // сначала пытаемся найти корзину по токену в куках, если он найден
@@ -136,7 +135,7 @@ export async function GET(
       // ИСПОЛЬЗУЕТ ПОВЕДЕНИЕ ПО УМОЛЧАНИЮ
       case null:
       // ИСПОЛЬЗУЕТ ПОВЕДЕНИЕ ПО УМОЛЧАНИЮ
-      default:
+      default: {
         // сначала пытаемся найти корзину по токену в куках, если он найден
         // если корзины нет, то создаем ее с этим уникальным токеном
         if (isTotenFinded) {
@@ -154,12 +153,11 @@ export async function GET(
         }
 
         // отправляю корзину и устанавливаю созданный токен в куки
-        return NextResponse.json(cart, {
-          headers: {
-            "Set-Cookie": `cartNextPizzaToken=${token}; Max-Age=360000;`, //Max-Age=2592000
-          },
-        });
+        const response = NextResponse.json(cart);
+        response.cookies.set(createCookie(CART_TOKEN_NAME, token));
+        return response;
         break;
+      }
     }
   } catch (error) {
     return NextResponse.json(
@@ -177,13 +175,13 @@ export async function POST(req: NextRequest) {
       }, 1000);
     });
   };
-  await bounce();
+  // await bounce();
 
   try {
     const request = await req.json();
     const newCartItems: ICart["items"] = request.items;
-   
-    const token = req.cookies.get("cartNextPizzaToken")?.value;
+
+    const token = req.cookies.get(CART_TOKEN_NAME)?.value;
     // const token = '1abdfefa-5eb9-45e3-9d39-e546ebd30c23'
     if (!token) {
       return NextResponse.json(
@@ -200,7 +198,7 @@ export async function POST(req: NextRequest) {
           },
         },
       }),
-      
+
       ...newCartItems.map((item) =>
         prisma.cartItem.create({
           data: {
@@ -237,7 +235,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(userCart || { items: [] });
   } catch (error) {
-    console.log("POST catch===", error);
+    console.log("api cart POST catch===", error);
 
     return NextResponse.json(
       { message: "CART-POST: неудалось обновить корзину" },
@@ -247,7 +245,3 @@ export async function POST(req: NextRequest) {
     // console.log('POST finally');
   }
 }
-
-
-
-

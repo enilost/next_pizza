@@ -8,36 +8,6 @@ import { ICart } from "../../services/cart";
 import toast from "react-hot-toast";
 
 export type CartAndItemsArg = "find" | "create" | "findOrCreate";
-export interface State {
-  cart: Cart | {};
-  loading: boolean;
-  isRequest: boolean;
-  error: string | false;
-  cartItems: ICart["items"];
-  addCartItem: (item: ICart["items"][number]) => void;
-  changeCount: (index: number, count: number) => void;
-  deleteCartItem: (index: number) => void;
-  getCartAndItems: (flag: CartAndItemsArg) => Promise<void>;
-  sinhronizeCart: () => void;
-  fetchGetCartAndItems: (
-    flag: CartAndItemsArg,
-    signal?: AbortSignal
-  ) => Promise<{
-    cart: State["cart"];
-    items: State["cartItems"];
-  }>;
-  fetchSetItems: (
-    items: State["cartItems"],
-    signal?: AbortSignal
-  ) => Promise<State["cart"] & { items: State["cartItems"] }>;
-  broadcastChannelSyncCart: (data: {
-    cart?: State["cart"];
-    cartItems?: State["cartItems"];
-    loading?: State["loading"];
-    isRequest?: State["isRequest"];
-    error?: State["error"];
-  }) => void;
-}
 
 //блок для синхронизации корзины между вкладками
 // проверка, поддерживается ли BroadcastChannel
@@ -94,8 +64,38 @@ function synchronizeBrowserTab() {
 }
 synchronizeBrowserTab();
 
-export let RequestSignal: AbortController | null = null;
+// export let RequestSignal: AbortController | null = null;
 // let isRequest: boolean = false;
+export interface State {
+  cart: Cart | {};
+  loading: boolean;
+  isRequest: boolean;
+  error: string | false;
+  cartItems: ICart["items"];
+  addCartItem: (item: ICart["items"][number]) => void;
+  changeCount: (index: number, count: number) => void;
+  deleteCartItem: (index: number) => void;
+  getCartAndItems: (flag: CartAndItemsArg) => Promise<void>;
+  sinhronizeCart: () => void;
+  fetchGetCartAndItems: (
+    flag: CartAndItemsArg,
+    signal?: AbortSignal
+  ) => Promise<{
+    cart: State["cart"];
+    items: State["cartItems"];
+  }>;
+  fetchSetItems: (
+    items: State["cartItems"],
+    signal?: AbortSignal
+  ) => Promise<State["cart"] & { items: State["cartItems"] }>;
+  broadcastChannelSyncCart: (data: {
+    cart?: State["cart"];
+    cartItems?: State["cartItems"];
+    loading?: State["loading"];
+    isRequest?: State["isRequest"];
+    error?: State["error"];
+  }) => void;
+}
 export const useStoreCart = create<State>()(
   // persist(
   devtools((set, get) => {
@@ -363,7 +363,6 @@ export const useStoreCart = create<State>()(
             notify();
           }
         } finally {
-
           if (get().loading === true || get().isRequest === true) {
             set((state) => ({ loading: false, isRequest: false }));
             if (!isBroadcastSupported) {
@@ -440,7 +439,7 @@ function compareObjects(
 }
 
 function timeBounceAwait(time: number, signal: AbortSignal) {
-  console.log("timeBounceAwait", time);
+  // console.log("timeBounceAwait", time);
   return new Promise((resolve, reject) => {
     const bounceTimeout = setTimeout(() => {
       // удаляем слушатель после завершения функции если он не сработал

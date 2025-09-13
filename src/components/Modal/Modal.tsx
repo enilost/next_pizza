@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { createPortal } from "react-dom";
 
+
 export function Modal({
   children,
   className,
@@ -26,7 +27,7 @@ export function Modal({
   const modalTemplate = (
     <div
       className={cn(
-        "fixed top-0 bottom-0 left-0 right-0  z-55 bg-slate-400/80 flex items-center justify-center overflow-hidden",
+        "fixed top-0 bottom-0 left-0 right-0 z-50 bg-slate-400/80 flex items-center justify-center overflow-hidden",
         className
       )}
       onClick={() => {
@@ -76,12 +77,16 @@ export function Modal({
       </div>
     </div>
   );
+  // контейнер для модалки в корневом лайауте
   const modalContainer = document.getElementById("modal_container");
   if (modalContainer) {
+    // если контейнер в корневом лайауте есть, то телепортируем модалку туда
+    // а контейнер для модалки в ближайшем лайауте удаляем
     const layoutModalContainer = document.getElementById("layout_modal_container");
     if (layoutModalContainer) layoutModalContainer.remove();
     return createPortal(modalTemplate, modalContainer);
   }
+  // иначе возвращаем модалку как есть
   return (
     modalTemplate
   );

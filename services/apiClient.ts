@@ -2,6 +2,7 @@ import * as products from "./searchProducts";
 import * as filters from "./filters";
 import * as cart from "./cart";
 import * as auth from "./auth";
+import * as stories from "./stories";
 const apiClient = {
   searchProducts: products.searchProducts,
   getIngredients: filters.getIngredients,
@@ -14,6 +15,8 @@ const apiClient = {
   registration: auth.registration,
   logout: auth.logout,
   isCheckAuth: auth.isCheckAuth,
+
+  getStories: stories.getStories,
   // findOrCreateCart: cart.findOrCreateCart
   // findCartByCookieToken: () => {},
 };

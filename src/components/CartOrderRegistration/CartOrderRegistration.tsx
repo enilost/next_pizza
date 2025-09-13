@@ -12,6 +12,7 @@ import { Title } from "../Title/Title";
 import { ICart } from "../../../services/cart";
 import toast from "react-hot-toast";
 import { Cart } from "@prisma/client";
+import { useRouter } from "next/navigation";
 // import prisma from "../../../prisma/prisma-client";
 
 interface CartOrderRegistrationProps {
@@ -19,7 +20,7 @@ interface CartOrderRegistrationProps {
     user: UserObject;
     cart: Cart;
     totalAmount: number;
-    cartItems:ICart["items"];
+    cartItems: ICart["items"];
     domain: string;
   }) => Promise<string>;
 }
@@ -34,7 +35,7 @@ const CartOrderRegistration: FunctionComponent<CartOrderRegistrationProps> = ({
       getCartAndItems("find");
     }
   }, []);
-
+  const router = useRouter();
   const [validError, createUserObject] = useStoreWithEqualityFn(
     useStoreUser,
     (state) => [state.validError, state.createUserObject],
@@ -51,11 +52,8 @@ const CartOrderRegistration: FunctionComponent<CartOrderRegistrationProps> = ({
   const [orderLoading, setOrderLoading] = useState(false);
 
   const handleCartOrder = () => {
-    console.log('domain', window.location.origin);
-    
     const inputError = validError();
     if (inputError) return;
-    console.log("handleCartOrder");
 
     if (items.length == 0 || !("id" in cart) || !totalAmount) return;
 
@@ -71,25 +69,25 @@ const CartOrderRegistration: FunctionComponent<CartOrderRegistrationProps> = ({
       domain,
     })
       .then((url) => {
-        console.log("then", url);
         toast.success("Заказ успешно оформлен \n Переход к оплате");
+
+        useStoreUser.getState().setComment("");
         if (url) {
-          window.location.href = url;
-        } else{
+          // window.location.href = url;
+
+          router.push(url);
+        } else {
           window.location.reload();
         }
       })
       .catch((err) => {
         console.log("catch CartOrderRegistration component", err);
-        // toast.error(err.message);
+
         toast.error("Ошибка сети при оформлении заказа");
       })
       .finally(() => {
         setOrderLoading(false);
       });
-
-    // console.log("pUser", pUser);
-    // bindServerAction();
   };
   return (
     <div className="flex flex-col gap-1 justify-start h-[100%]">

@@ -4,11 +4,18 @@ import { verificationJwtToken } from "@/lib/utils";
 import { decode } from "jsonwebtoken";
 import { jwtVerify } from "jose";
 import { JWT_TOKEN_NAME } from "./constants/constants";
+
+let isRedirectAuth = false;
+const cookieName = "middlewareRedirect";
 export async function middleware(request: NextRequest) {
-  console.log("middleware");
-  
+  // console.log("middleware");
+
   // стр логинов
-  const authPages = ["/auth", "/login"];
+  const authPages = [
+    //
+    // "/auth",
+    "/login",
+  ];
   // стр защищенные
   const protectedPages = ["/profile"];
 
@@ -36,10 +43,33 @@ export async function middleware(request: NextRequest) {
     return await protectedPagesHandler(request, token);
   }
 
-  if(path === "/products"){
+  if (path === "/products") {
     // так как этой страницы нет
-    return NextResponse.redirect(new URL("/", request.url),307);
+    return NextResponse.redirect(new URL("/", request.url), 307);
   }
+
+  if (path === "/auth") {
+    // так как эта страница только для переадресаций
+    // return NextResponse.redirect(new URL("/", request.url), 307);
+    if (request.cookies.get(cookieName)?.value === "true") {
+      // если кука есть(она устанавливается тут в protectedPagesHandler), то пропускаем на ауз
+      const response = NextResponse.next();
+      response.cookies.delete(cookieName);
+      return response;
+    }
+    return NextResponse.redirect(new URL("/", request.url), 307);
+  }
+  // if (path === "/auth" && isRedirectAuth) {
+  // блок с флагом isRedirectAuth, а не с кукой
+  //   // так как эта страница только для переадресаций
+  //   // return NextResponse.redirect(new URL("/", request.url), 307);
+  //   const response = NextResponse.next();
+  //   isRedirectAuth = false;
+  //   return response;
+  // } else if (path === "/auth" && !isRedirectAuth) {
+  //   return NextResponse.redirect(new URL("/", request.url), 307);
+  // }
+
   // Если путь не ведет на логины и защищенные страницы
   // то пропускаем дальше без проверок
   const response = NextResponse.next();
@@ -49,16 +79,16 @@ export async function middleware(request: NextRequest) {
 // Указываем, к каким маршрутам применять middleware
 export const config = {
   matcher: [
-    // "/auth",
-    // "/auth/:path*",
+    "/auth",
+    "/auth/:path*",
 
-    // "/login",
-    // "/login/:path*",
+    "/login",
+    "/login/:path*",
 
-    // // "/products/:path*",
+    "/products/:path*",
 
-    // "/profile",
-    // "/profile/:path*",
+    "/profile",
+    "/profile/:path*",
   ],
 };
 
@@ -92,22 +122,33 @@ const protectedPagesHandler = async (
   request: NextRequest,
   token: string | undefined
 ) => {
+  // console.log("protectedPagesHandler token", token);
+
   if (!token) {
     // если нет токена, то редиректим на авторизацию
     const response = NextResponse.redirect(new URL("/auth", request.url), 307);
+    response.cookies.set(cookieName, "true", {
+      maxAge: 11,
+    });
+    isRedirectAuth = true;
     return response;
   }
   const decoded = await verificationJwtToken(
     token,
     process.env.NEXT_AUTH_SECRET_JWT!
   );
+
   if (!decoded) {
     // если токен неверный, то удаляем токен и редиректим на авторизацию
     const response = NextResponse.redirect(new URL("/auth", request.url), 307);
+    response.cookies.set(cookieName, "true", {
+      maxAge: 11,
+    });
+    isRedirectAuth = true;
     response.cookies.delete(JWT_TOKEN_NAME);
     return response;
   }
   // если токен верный, то пропускаем на защищенную страницу
-  const response =NextResponse.next();
+  const response = NextResponse.next();
   return response;
 };

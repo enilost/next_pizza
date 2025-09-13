@@ -1,21 +1,30 @@
 "use client";
-import { FunctionComponent, useEffect } from "react";
+import { FunctionComponent, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ShoppingCart } from "lucide-react";
+import { ArrowRight, Loader2, ShoppingCart } from "lucide-react";
 import CartDrawer from "../CartDrawer/CartDrawer";
 import { useStoreCart } from "@/store/cart";
 
-interface HeaderCartProps {}
+interface HeaderCartProps {
+  mountRequestFindCart?: boolean;
+}
 
-const HeaderCart: FunctionComponent<HeaderCartProps> = () => {
+const HeaderCart: FunctionComponent<HeaderCartProps> = ({
+  mountRequestFindCart = true,
+}) => {
   const [items, getCartAndItems, loading] = useStoreCart((state) => [
     state.cartItems,
     state.getCartAndItems,
     state.loading,
   ]);
 
+  const [isFirstLoading, setIsFirstLoading] = useState(mountRequestFindCart);
+
   useEffect(() => {
-    getCartAndItems("find");
+    if (!mountRequestFindCart) return;
+    getCartAndItems("find").finally(() => {
+      setIsFirstLoading(false);
+    });
   }, []);
 
   return (
@@ -31,16 +40,22 @@ const HeaderCart: FunctionComponent<HeaderCartProps> = () => {
           text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 group relative`)}
       >
         <b>
-          {items.reduce((acc, item) => {
-            const ingrPrice = item.ingredients.reduce(
-              (ingrAccum, ingredient) => {
-                return ingrAccum + ingredient.price;
-              },
-              0
-            );
-            return acc + (item.productItem.price + ingrPrice) * item.quantity;
-          }, 0)}{" "}
-          ₽
+          {/* isFirstLoading loading*/}
+          {isFirstLoading === false ? (
+            " " +
+            items.reduce((acc, item) => {
+              const ingrPrice = item.ingredients.reduce(
+                (ingrAccum, ingredient) => {
+                  return ingrAccum + ingredient.price;
+                },
+                0
+              );
+              return acc + (item.productItem.price + ingrPrice) * item.quantity;
+            }, 0) +
+            " ₽"
+          ) : (
+            <Loader2 className="w-4 h-4 animate-spin ml-2" />
+          )}
         </b>
         <span className={cn("h-full w-[1px] bg-white/30 mx-2")}></span>
         <div
@@ -48,8 +63,18 @@ const HeaderCart: FunctionComponent<HeaderCartProps> = () => {
             "flex items-center gap-1 transition duration-300 group-hover:opacity-0"
           )}
         >
-          <ShoppingCart className={cn("h-4 w-4 relative")}></ShoppingCart>
-          <b>{items.reduce((acc, item) => acc + item.quantity, 0)}</b>
+          {/* isFirstLoading loading*/}
+          {!isFirstLoading && (
+            <ShoppingCart className={cn("h-4 w-4 relative")}></ShoppingCart>
+          )}
+          <b>
+            {/* isFirstLoading loading */}
+            {isFirstLoading === false ? (
+              items.reduce((acc, item) => acc + item.quantity, 0)
+            ) : (
+              <Loader2 className="w-4 h-4 animate-spin ml-2" />
+            )}
+          </b>
         </div>
         <ArrowRight className="w-5 absolute right-5 transition duration-300 -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0" />
       </span>
@@ -58,4 +83,3 @@ const HeaderCart: FunctionComponent<HeaderCartProps> = () => {
 };
 
 export default HeaderCart;
-

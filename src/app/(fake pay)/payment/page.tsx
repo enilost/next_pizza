@@ -8,6 +8,7 @@ import { FunctionComponent } from "react";
 import prisma from "../../../../prisma/prisma-client";
 import { OrderStatus } from "@prisma/client";
 import RedirectFakePay from "@/components/FakePay/RedirectFakePay";
+import { ORDER_NAME } from "@/constants/constants";
 
 interface PaymentPageProps {
   params: { id: string };
@@ -18,14 +19,14 @@ const PaymentPage: FunctionComponent<PaymentPageProps> = ({
   params,
   searchParams,
 }) => {
-  const CartOrderId = cookies().get("NextPizzaOrderId")?.value;
+  const CartOrderId = cookies().get(ORDER_NAME)?.value;
 
   const SearchParamCartOrderId = searchParams["order_id"];
   
   const serverActionOrderSucceess = async () => {
     "use server";
     try {
-      const CartOrderIdc = cookies().get("NextPizzaOrderId")?.value;
+      const CartOrderIdc = cookies().get(ORDER_NAME)?.value;
 
       if (!CartOrderIdc || CartOrderIdc != SearchParamCartOrderId) {
         throw new Error("неудалось найти ордер");
@@ -42,7 +43,7 @@ const PaymentPage: FunctionComponent<PaymentPageProps> = ({
         throw new Error("неудалось изменить статус ордера");
       }
       // cookies().delete("NextPizzaOrderId");
-      cookies().set("NextPizzaOrderId", "", {
+      cookies().set(ORDER_NAME, "", {
         path: "/payment",
         httpOnly: true,
         maxAge: 0,
@@ -60,7 +61,7 @@ const PaymentPage: FunctionComponent<PaymentPageProps> = ({
   const serverActionOrderCancelled = async () => {
     "use server";
     try {
-      const orderId = cookies().get("NextPizzaOrderId")?.value;
+      const orderId = cookies().get(ORDER_NAME)?.value;
       
       if (!orderId || orderId != SearchParamCartOrderId) {
         throw new Error("неудалось найти ордер");
@@ -77,7 +78,7 @@ const PaymentPage: FunctionComponent<PaymentPageProps> = ({
         throw new Error("неудалось изменить статус ордера");
       }
       // cookies().delete("NextPizzaOrderId");
-      cookies().set("NextPizzaOrderId", "", {
+      cookies().set(ORDER_NAME, "", {
         path: "/payment",
         httpOnly: true,
         maxAge: 0,

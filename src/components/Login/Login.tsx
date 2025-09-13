@@ -11,25 +11,19 @@ import { useStoreWithEqualityFn } from "zustand/traditional";
 import { useStoreUser } from "@/store/user";
 import { Button } from "../ui/button";
 import toast from "react-hot-toast";
-import {
-  authEmail,
-  authPhone,
-  isCheckAuth,
-  logout,
-} from "../../../services/auth";
-import { I_dadataAddress } from "../DadataAddress/DadataAddress";
-import { AxiosError } from "axios";
-import { IReturnUser } from "@/app/api/auth/route";
+
 import { useRouter } from "next/navigation";
+import useAuth from "@/hooks/useAuth";
+
 interface LoginProps {
-  loading: boolean;
-  setLoading: (value: boolean) => void;
+  // loading: boolean;
+  // setLoading: (value: boolean) => void;
   abortSignalref?: React.MutableRefObject<AbortController>;
 }
 
 const Login: FunctionComponent<LoginProps> = ({
-  loading,
-  setLoading,
+  // loading,
+  // setLoading,
   abortSignalref,
 }) => {
   const [phoneOrEmail, setPhoneOrEmail] = useState<"phone" | "email">("email");
@@ -38,6 +32,8 @@ const Login: FunctionComponent<LoginProps> = ({
     null
   );
   const Router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+
   const PHONE_MASK: Array<string | RegExp> = [
     "+",
     "7",
@@ -85,7 +81,7 @@ const Login: FunctionComponent<LoginProps> = ({
       state.setLastName,
       state.setAddress,
       state.setQueryInputAddress,
-      state.setIsAuth
+      state.setIsAuth,
     ],
     (prev, next) =>
       prev[0] === next[0] && //email
@@ -93,7 +89,7 @@ const Login: FunctionComponent<LoginProps> = ({
       prev[3] === next[3] && //phone
       prev[5] === next[5] //validPhone
   );
-
+  const { auth, loading } = useAuth();
   const handleEmail = (e: ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
   };
@@ -111,19 +107,7 @@ const Login: FunctionComponent<LoginProps> = ({
     }
     return null;
   };
-  const setUserState = (user: IReturnUser) => {
-    const [firstName, lastname] = user.fullName.split(" ");
-    setFirstName(firstName);
-    setLastName(lastname);
-    setPhone(user.phone);
-    setEmail(user.email);
-    if (user.address) {
-      const typedAddress = user.address as unknown as I_dadataAddress;
-      setAddress(typedAddress);
-      setQueryInputAddress(typedAddress.value);
-    }
-    setIsAuth(true);
-  };
+
   const submitForm = async () => {
     if (loading) return;
     if (isValidErrors()) {
@@ -133,69 +117,33 @@ const Login: FunctionComponent<LoginProps> = ({
       return;
     }
     try {
-      setLoading(true);
+      // setLoading(true);
+      // let user: IReturnUser | null = null;
       if (phoneOrEmail === "phone") {
         // console.log("вход по телефону");
-        const user = await authPhone(
-          {
-            phone,
-            password,
-          },
-          abortSignalref?.current.signal
-        );
-        setUserState(user);
-        toast.success("Вы успешно вошли в аккаунт");
-      } else if (phoneOrEmail === "email") {
+        await auth({ phone, password });
+      } else {
         // console.log("вход по почте");
-        const user = await authEmail(
-          {
-            email,
-            password,
-          },
-          abortSignalref?.current.signal
-        );
-        setUserState(user);
-        toast.success("Вы успешно вошли в аккаунт");
+        await auth({ email, password });
       }
-      // есть ли история для шага назад
+      // setUserState(user);
+      // есть ли история для шага назад(излишняя проверка можно удалить)
       const hasPreviousPage = window.history.length > 1;
-      // прошлая страница была на этом же сайте
-      const isSameDomain =
-        document.referrer &&
-        new URL(document.referrer).hostname === window.location.hostname;
-
-      // если есть история и она на этом же сайте,
+      // это происходит в модальном окне?
+      const modalWrapper = document.getElementById("modal_wrapper");
+      const isModal = modalWrapper?.contains(formRef.current);
+      // если есть история и мы в модалке, значит роут перехвачен
       // то возвращаемся на предыдущую страницу
       // иначе переходим на главную страницу
-      if (hasPreviousPage && isSameDomain) {
+      if (hasPreviousPage && isModal) {
         Router.back();
       } else {
         Router.push("/");
       }
     } catch (error) {
       console.log("Login.tsx error ", error);
-      if (error instanceof AxiosError) {
-        if (error.response) {
-          // Сервер вернул ответ со статусом, отличным от 2xx
-          toast.error(
-            error.response.data.message || `Ошибка: ${error.response.status}`
-          );
-        } else if (error.config?.signal?.aborted) {
-          // если запрос отменен абортконтроллером
-          toast.error("Запрос отменен");
-        } else if (error.request) {
-          // Запрос был сделан, но ответ не получен
-          toast.error("Сервер не отвечает. Пожалуйста, попробуйте позже.");
-        } else {
-          // Что-то пошло не так при настройке запроса
-          toast.error(`Ошибка: ${error.message}`);
-        }
-      } else {
-        // Обработка не-Axios ошибок
-        toast.error("Произошла неизвестная ошибка");
-      }
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
 
@@ -237,17 +185,16 @@ const Login: FunctionComponent<LoginProps> = ({
   };
   useEffect(() => {
     setEmail("user@test.ru");
+    setPassword("123123");
   }, []);
-  const isCheckAuthFunc = async () => {
-    // let decodet = await isCheckAuth();
-    // console.log("decodet ", decodet);
-  };
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         submitForm();
       }}
+      ref={formRef}
     >
       <div className="grid grid-cols-2 gap-x-5 gap-y-1 mb-3">
         {phoneOrEmail === "phone" ? (
@@ -305,8 +252,6 @@ const Login: FunctionComponent<LoginProps> = ({
         <span
           className="text-md hover:text-[hsl(var(--primary))] cursor-pointer"
           onClick={() => {
-            // logout();
-            // isCheckAuthFunc();
             setPhoneOrEmail(phoneOrEmail === "phone" ? "email" : "phone");
           }}
         >

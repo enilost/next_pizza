@@ -21,19 +21,11 @@ export default function MainLayout(
   }>,
   ...props: any
 ) {
-  // const cookieStore = cookies();
-  // let isAuth = false;
-  // const token = cookieStore.get("NextPizzaJwtToken")?.value;
-  // if (token) {
-  //   const decode = verifyTokenJWB(token, process.env.NEXT_AUTH_SECRET_JWT!);
-  //   if (decode) {
-  //     isAuth = true;
-  //   }
-  // }
+
   return (
     <>
       <Header ></Header>
-      <main // className={"min-h-screen"} isAuth={isAuth}
+      <main // className={"min-h-screen"} 
       >
         {children}
       </main>

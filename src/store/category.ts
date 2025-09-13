@@ -6,7 +6,7 @@ interface State {
 
 export const useStoreCategory = create<State>()((set) => {
   return {
-    activeCategoryId: "1",
+    activeCategoryId: "",
     setActiveCategoryId: (id) => {
       set((state) => {
         return { activeCategoryId: id };

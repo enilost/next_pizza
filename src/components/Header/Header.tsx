@@ -1,14 +1,12 @@
 import { cn } from "@/lib/utils";
 import { FunctionComponent, Suspense } from "react";
 import Container from "@/components/Container/Container";
-// import { Input } from "../ui/input";
-import { Button } from "../ui/button";
 import Image from "next/image";
-import { ArrowRight, ShoppingCart, User } from "lucide-react";
 import HeaderSearch from "../HeaderSearch/HeaderSearch";
 import Link from "next/link";
 import HeaderCart from "../HeaderCart/HeaderCart";
 import LoginButton from "../LoginButton/LoginButton";
+
 // import CartDrawer from "../CartDrawer/CartDrawer";
 interface HeaderProps {
   headerSeach?: boolean;
@@ -25,15 +23,25 @@ const Header: FunctionComponent<HeaderProps> = ({
   isAuth = false,
   className,
 }) => {
-  // console.log("Header", props);
+  const btns = (
+    <div className={cn("flex items-center gap-2 ")} id="header_btns">
+      {headerLogin && <LoginButton />}
+      {headerCart && <HeaderCart />}
+    </div>
+  );
 
   return (
     <header
-      className={cn(className || "", "border border-b border-x-0 border-t-0 ")}
+      // || ""
+      className={cn(className, "border border-b border-x-0 border-t-0 ")}
+      id="main_header"
     >
       <Container>
-        <div className={cn(" flex justify-between items-center py-8")}>
-          <Link href={"/?price-to=14341&pizza-types=2"}>
+        <div
+          className={cn(" flex justify-between items-center py-8")}
+          id="main_header-inner"
+        >
+          <Link href={"/"}>
             <div className={cn(" flex items-center gap-2")}>
               <Image src="/logo.png" width={35} height={35} alt="Logo" />
               <div>
@@ -57,16 +65,7 @@ const Header: FunctionComponent<HeaderProps> = ({
               <HeaderSearch className="mx-10 flex-1"></HeaderSearch>
             </Suspense>
           )}
-
-          <div className={cn("flex items-center gap-2")}>
-            {headerLogin &&
-              <LoginButton/>}
-            <div>
-              {/* <Suspense> */}
-              {headerCart && <HeaderCart />}
-              {/* </Suspense> */}
-            </div>
-          </div>
+          {btns}
         </div>
       </Container>
     </header>

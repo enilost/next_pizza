@@ -66,22 +66,7 @@ const CartDrawer: FunctionComponent<CartDrawerProps> = ({
         const a: never = operation;
     }
   };
-  // useEffect(() => {
-  //   const handleStorage = (e: StorageEvent) => {
-  //     if (e.key === 'cart') {
-  //       const newState = JSON.parse(e.newValue || '{}');
-  //       useStoreCart.setState({
-  //         cart: newState.state.cart,
-  //         cartItems: newState.state.cartItems
-  //       });
-  //     }
-  //   };
 
-  //   window.addEventListener('storage', handleStorage);
-  //   return () => window.removeEventListener('storage', handleStorage);
-  // }, []);
-  // bg-[hsl(20,100%,50%,0.2)]
-  // console.log("cartdrawer");
 
   const totalCount = items.reduce((acc, item) => acc + item.quantity, 0);
   return (

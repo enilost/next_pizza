@@ -18,7 +18,7 @@ const LoginRegistration: FunctionComponent<LoginRegistrationProps> = () => {
   // реф для сохранения значения прошлой высоты
   const prevHeightRef = useRef<number>(0);
   // обсервер за высотой формы
-  const resizeObserverRef = useRef<ResizeObserver|null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const updateHeight = () => {
     if (!divHeightRef.current || !divHeightRef.current.children[0]) return;
@@ -27,7 +27,8 @@ const LoginRegistration: FunctionComponent<LoginRegistrationProps> = () => {
     const pHeight = rect.height;
     if (prevHeightRef.current === pHeight) {
       //если высоты форм оказались одинаковы и транзишен не сработал, то сразу делаем видимым
-      overflowFunction("visible");
+      // overflowFunction("visible");
+      overflowFunction("auto");
     } else {
       divHeightRef.current.style.height = `${pHeight}px`;
     }
@@ -35,12 +36,12 @@ const LoginRegistration: FunctionComponent<LoginRegistrationProps> = () => {
   };
 
   // useEffect(() => {
-  // этот юзэффект может понадобиться, если при изменении форм, условном рендеринге, тегам  добавить ключи
-  // так как каждый раз надо будет подписываться на новый элемент
+  // // этот юзэффект может понадобиться, если при изменении форм, условном рендеринге, тегам  добавить ключи
+  // // так как каждый раз надо будет подписываться на новый элемент
   //   if (!divHeightRef.current || !divHeightRef.current.children[0]) return;
   //   // Переподключаем ResizeObserver к новому элементу
-  //   resizeObserverRef.current.disconnect();
-  //   resizeObserverRef.current.observe(divHeightRef.current.children[0]);
+  //   resizeObserverRef.current?.disconnect();
+  //   resizeObserverRef.current?.observe(divHeightRef.current.children[0]);
   //   // Обновляем высоту сразу
   //   updateHeight();
   // }, [typeForm]);
@@ -52,12 +53,15 @@ const LoginRegistration: FunctionComponent<LoginRegistrationProps> = () => {
     resizeObserverRef.current = new ResizeObserver((entries) => {
       // Вызываем updateHeight при изменении размера
       updateHeight();
-    })
+    });
     const divElement = divHeightRef.current;
+    setTimeout(() => {
+      overflowFunction("auto");
+    }, 10);
     if (!divElement) return;
-
     const handleTransitionEnd = () => {
-      overflowFunction("visible");
+      // overflowFunction("visible");
+      overflowFunction("auto");
     };
     const handleTransitionCancel = () => {
       overflowFunction("hidden");
@@ -82,7 +86,9 @@ const LoginRegistration: FunctionComponent<LoginRegistrationProps> = () => {
   }, []);
   // эта функция нужна, чтоб изменять оверфлоу у модалки
   // так как выпадающие адреса ее перекрывают, и тогда оверфлов-хидден обрезает список адресов
-  const overflowFunction = (flag: "hidden" | "visible") => {
+  const overflowFunction = (
+    flag: "hidden" | "auto" //| "visible"
+  ) => {
     const modalWrapperElement = document.getElementById("modal_wrapper");
     const modalInnerElement = document.getElementById("modal_inner");
     if (!modalInnerElement || !modalWrapperElement || !divHeightRef.current) {
@@ -95,7 +101,7 @@ const LoginRegistration: FunctionComponent<LoginRegistrationProps> = () => {
   // divHeightRef
 
   return (
-    <Container className={"w-[700px] max-w-[100%]"}>
+    <Container className={"w-[700px] max-w-[100%] mb-0"}>
       {/* Контейнер переключателей */}
       <div className="flex">
         <button
@@ -149,18 +155,24 @@ const LoginRegistration: FunctionComponent<LoginRegistrationProps> = () => {
         >
           {/* //h-[85px] */}
           {typeForm === "login" ? (
-            <div id="login">
+            <div
+              id="login"
+              // key={"login"}
+            >
               <Login
-                loading={loading}
-                setLoading={setLoading}
+                // loading={loading}
+                // setLoading={setLoading}
                 abortSignalref={abortSignalref}
               />
             </div>
           ) : (
-            <div id="registration">
+            <div
+              id="registration"
+              // key={"registration"}
+            >
               <Registration
-                loading={loading}
-                setLoading={setLoading}
+                // loading={loading}
+                // setLoading={setLoading}
                 abortSignalref={abortSignalref}
               />
             </div>

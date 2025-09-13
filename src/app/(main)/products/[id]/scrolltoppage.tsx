@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect } from "react";
 
 const ScrollTopPage = () => {
   useLayoutEffect(() => {
-    console.log("ScrollTopPage", window);
+    // console.log("ScrollTopPage", window);
     // window.scrollTo(0, 0);
     // window.scrollTo({ top: 0, behavior: "auto" });
     if (typeof window !== "undefined") {

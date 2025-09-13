@@ -3,11 +3,15 @@ import prisma from "../../../../prisma/prisma-client";
 import { compareSync, hashSync } from "bcrypt";
 import { User } from "@prisma/client";
 import {
+  createCookie,
   createJwtToken,
+  deleteCookie,
   verifyTokenJWB as verificationJwtToken,
 } from "@/lib/utils";
-import { JWT_TOKEN_NAME } from "@/constants/constants";
+import { CART_TOKEN_NAME, JWT_TOKEN_NAME } from "@/constants/constants";
 import { cookies } from "next/headers";
+import { authDataType, regDataType } from "@/hooks/useAuth";
+
 
 export type IReturnUser = Omit<
   User,
@@ -22,20 +26,17 @@ export type IReturnUser = Omit<
 export async function POST(
   req: NextRequest
 ): Promise<NextResponse<IReturnUser> | NextResponse<{ message: string }>> {
-  // console.log('req: NextRequest ', req);
-  // const user = await req.json();
-  // console.log('req: NextRequest body ', user);
-  function redirectToHome() {
-    let isRedirect = false;
-    const redirectPathArray = ["/auth"];
-    const referer = req.headers.get("referer");
-    // if(!referer)return isRedirect;
-    // const refererUrl = new URL(referer)
-    // const path = refererUrl.pathname;
-    // if(redirectPathArray.includes(path)){
-    //   isRedirect = true;
-    // }
-    return isRedirect;
+  function returnUserFunc(user: User): IReturnUser {
+    const {
+      password: pass,
+      createdAt,
+      updatedAt,
+      provider,
+      providerId,
+      verified,
+      ...returnUser
+    } = user;
+    return returnUser;
   }
   // console.log('res: NextResponse ', res);
   function jwtTok(user: IReturnUser) {
@@ -55,6 +56,27 @@ export async function POST(
     });
     return token;
   }
+  async function createUniqueCart(user: User) {
+    let cartToken = crypto.randomUUID();
+    while (true) {
+      const cartWhile = await prisma.cart.findFirst({
+        where: {
+          token: cartToken,
+        },
+      });
+      if (!cartWhile) {
+        break;
+      }
+      cartToken = crypto.randomUUID();
+    }
+    const newCart = await prisma.cart.create({
+      data: {
+        token: cartToken,
+        userId: user.id,
+      },
+    });
+    return newCart;
+  }
   const bounce = () => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -66,8 +88,20 @@ export async function POST(
     const type = req.nextUrl.searchParams.get("type");
     switch (type) {
       case "email": {
-        await bounce();
-        const { email, password } = await req.json();
+        // await bounce();
+        // const reqToken = cookies().get(JWT_TOKEN_NAME)?.value;
+        const reqToken = req.cookies.get(JWT_TOKEN_NAME)?.value;
+        if (reqToken) {
+          return NextResponse.json(
+            { message: "Пользователь уже авторизован" },
+            { status: 401 }
+          );
+        }
+        const {
+          email,
+          password,
+          cart: reqCart,
+        } = (await req.json()) as authDataType["email"];
         const user = await prisma.user.findUnique({
           where: {
             email: email,
@@ -91,36 +125,65 @@ export async function POST(
             { status: 401 }
           );
         }
-        const {
-          password: pass,
-          createdAt,
-          updatedAt,
-          provider,
-          providerId,
-          verified,
-          ...returnUser
-        } = user;
+        // если до логина пользователь уже использовал корзину
+        if (reqCart) {
+          // значит он создал на бэке корзину без привязки к юзеру
+          // и ее надо удалить
+          if (!reqCart.userId && reqCart.id) {
+            await prisma.$transaction(async (tx) => {
+              // Удаляем все элементы корзины , если они есть
+              await tx.cartItem.deleteMany({
+                where: {
+                  cartId: reqCart.id,
+                },
+              });
+              // Удаляем саму корзину
+              await tx.cart.delete({
+                where: {
+                  id: reqCart.id,
+                },
+              });
+            });
+          }
+        }
+        const returnUser = returnUserFunc(user);
         const token = jwtTok(returnUser);
-        // if(redirectToHome()){
-        //     // @ts-ignore
-        //     returnUser._redirect = "/";
-        // }
 
         const response = NextResponse.json(returnUser);
-        response.cookies.set({
-          name: JWT_TOKEN_NAME,
-          value: token,
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 60 * 60 * 24 * 7, //7 дней
-          path: "/",
+        // кука jwt авторизации
+        response.cookies.set(createCookie(JWT_TOKEN_NAME, token));
+        const cart = await prisma.cart.findUnique({
+          where: {
+            userId: user.id,
+          },
         });
+        // кука корзины обновляется
+        if (cart) {
+          const cartCookiee = cart.token;
+          response.cookies.set(createCookie(CART_TOKEN_NAME, cartCookiee));
+        } else {
+          // у каждого пользователя должна быть корзина, если ее нет, то это ошибка
+          return NextResponse.json(
+            { message: "Ошибка, у пользователя отсутствует корзина" },
+            { status: 401 }
+          );
+        }
         return response;
       }
       case "phone": {
-        await bounce();
-        const { phone, password } = await req.json();
+        // await bounce();
+        const reqToken = req.cookies.get(JWT_TOKEN_NAME)?.value;
+        if (reqToken) {
+          return NextResponse.json(
+            { message: "Пользователь уже авторизован" },
+            { status: 401 }
+          );
+        }
+        const {
+          phone,
+          password,
+          cart: reqCart,
+        } = (await req.json()) as authDataType["phone"];
         const user = await prisma.user.findUnique({
           where: {
             phone: phone,
@@ -144,35 +207,61 @@ export async function POST(
             { status: 401 }
           );
         }
-        const {
-          password: pass,
-          createdAt,
-          updatedAt,
-          provider,
-          providerId,
-          verified,
-          ...returnUser
-        } = user;
-        const token = jwtTok(returnUser);
-        if (redirectToHome()) {
-          // @ts-ignore
-          returnUser._redirect = "/";
+        // если до логина пользователь уже использовал корзину
+        if (reqCart) {
+          // значит он создал на бэке корзину без привязки к юзеру
+          // и ее надо удалить
+          if (!reqCart.userId && reqCart.id) {
+            await prisma.$transaction(async (tx) => {
+              // Удаляем все элементы корзины , если они есть
+              await tx.cartItem.deleteMany({
+                where: {
+                  cartId: reqCart.id,
+                },
+              });
+              // Удаляем саму корзину
+              await tx.cart.delete({
+                where: {
+                  id: reqCart.id,
+                },
+              });
+            });
+          }
         }
+        const returnUser = returnUserFunc(user);
+        const token = jwtTok(returnUser);
+
         const response = NextResponse.json(returnUser);
-        response.cookies.set({
-          name: JWT_TOKEN_NAME,
-          value: token,
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 60 * 60 * 24 * 7, //7 дней
-          path: "/",
+        response.cookies.set(createCookie(JWT_TOKEN_NAME, token));
+        const cart = await prisma.cart.findUnique({
+          where: {
+            userId: user.id,
+          },
         });
+        // кука корзины обновляется
+        if (cart) {
+          const cartCookiee = cart.token;
+          response.cookies.set(createCookie(CART_TOKEN_NAME, cartCookiee));
+        } else {
+          // у каждого пользователя должна быть корзина, если ее нет, то это ошибка
+          return NextResponse.json(
+            { message: "Ошибка, у пользователя отсутствует корзина" },
+            { status: 401 }
+          );
+        }
         return response;
       }
       case "registration": {
-        await bounce();
-        const { email, password, phone, fullName, address } = await req.json();
+        // await bounce();
+        const reqToken = req.cookies.get(JWT_TOKEN_NAME)?.value;
+        if (reqToken) {
+          return NextResponse.json(
+            { message: "Пользователь уже авторизован" },
+            { status: 401 }
+          );
+        }
+        const { email, password, phone, fullName, address, cart } =
+          (await req.json()) as regDataType;
         const userEmail = await prisma.user.findUnique({
           where: {
             email: email,
@@ -204,48 +293,57 @@ export async function POST(
             password: hashSync(password, 10),
             phone,
             fullName,
-            address,
+            address: address as any,
             verified: new Date(),
           },
         });
-        const {
-          password: pass,
-          createdAt,
-          updatedAt,
-          provider,
-          providerId,
-          verified,
-          ...returnUser
-        } = user;
+        const returnUser = returnUserFunc(user);
         const token = jwtTok(returnUser);
-        if (redirectToHome()) {
-          // @ts-ignore
-          returnUser._redirect = "/";
+
+        // если пользователь до регистрации что то добавил в корзину
+        //  и тем самым создал ее без пользователя
+        let cartUniqueToken = "";
+        if (cart && !cart.userId) {
+          // ищем эту корзину и меняем ей userId
+          const updatedCart = await prisma.cart.update({
+            where: {
+              id: cart.id,
+            },
+            data: {
+              userId: user.id,
+            },
+          });
+          
+          cartUniqueToken = updatedCart.token;
+        } else {
+          // создаем корзину под пользователя
+          // с уникальным токеном
+          // уникальность проверяется в цикле
+          cartUniqueToken = (await createUniqueCart(user)).token;
         }
+
         const response = NextResponse.json(returnUser);
-        response.cookies.set({
-          name: JWT_TOKEN_NAME,
-          value: token,
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 60 * 60 * 24 * 7, //7 дней
-          path: "/",
-        });
+        response.cookies.set(createCookie(CART_TOKEN_NAME, cartUniqueToken));
+        response.cookies.set(createCookie(JWT_TOKEN_NAME, token));
         return response;
       }
 
       case "logout": {
         const response = NextResponse.json({ message: "Выход выполнен" });
-
-        response.cookies.delete(JWT_TOKEN_NAME);
+        deleteCookie(response, JWT_TOKEN_NAME);
+        deleteCookie(response, CART_TOKEN_NAME);
+        // response.cookies.delete(JWT_TOKEN_NAME);
+        // response.cookies.delete({
+        //   name: CART_TOKEN_NAME,
+        //   path: "/api",
+        // });
         return response;
       }
 
       case "is_check_auth": {
         const token = cookies().get(JWT_TOKEN_NAME)?.value;
         // const token = req.cookies.get(JWT_TOKEN_NAME)?.value;
-        console.log("is_check_auth", token);
+        // console.log("is_check_auth", token);
         if (!token) {
           return NextResponse.json(
             { message: "Токен не найден" },
@@ -267,9 +365,10 @@ export async function POST(
             { message: "Недействительный токен удален" },
             { status: 401 }
           );
-          console.log("попадаю в этот блок и пытаюсь удалить куку");
+          // console.log("попадаю в этот блок и пытаюсь удалить куку");
 
-          response.cookies.delete(JWT_TOKEN_NAME);
+          // response.cookies.delete(JWT_TOKEN_NAME);
+          deleteCookie(response, JWT_TOKEN_NAME);
           return response;
         }
 
@@ -284,39 +383,34 @@ export async function POST(
             { message: "не удалось найти данного пользователя" },
             { status: 401 }
           );
-          response.cookies.delete(JWT_TOKEN_NAME);
+          // response.cookies.delete(JWT_TOKEN_NAME);
+          deleteCookie(response, JWT_TOKEN_NAME);
           return response;
         }
 
         if (!user.verified) {
-          return NextResponse.json(
+          const response = NextResponse.json(
             { message: "Пользователь не верифицирован" },
             { status: 401 }
           );
+          deleteCookie(response, JWT_TOKEN_NAME);
+          return response;
         }
-        const {
-          password: pass,
-          createdAt,
-          updatedAt,
-          provider,
-          providerId,
-          verified,
-          ...returnUser
-        } = user;
+
+        const returnUser = returnUserFunc(user);
         const newToken = jwtTok(returnUser);
         const response = NextResponse.json(returnUser);
-        response.cookies.set({
-          name: JWT_TOKEN_NAME,
-          value: newToken,
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 60 * 60 * 24 * 7, //7 дней
-          path: "/",
-        });
+        response.cookies.set(createCookie(JWT_TOKEN_NAME, newToken));
+        // const cart = await prisma.cart.findUnique({
+        //   where: {
+        //     userId: user.id,
+        //   },
+        // });
+        // if (cart) {
+        //   const cartCookiee = cart.token;
+        //   response.cookies.set(createCookie(CART_TOKEN_NAME, cartCookiee));
+        // }
         return response;
-
-
       }
       default:
         return NextResponse.json(

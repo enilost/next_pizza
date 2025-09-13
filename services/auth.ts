@@ -1,13 +1,11 @@
-import { User } from "@prisma/client";
-import { axiosInst } from "./axios";
-import { ICart } from "./cart";
-import CONSTANTS_API from "./constantsApi";
-import { I_dadataAddress } from "@/components/DadataAddress/DadataAddress";
-import { IReturnUser } from "@/app/api/auth/route";
-import { headers } from "next/headers";
-import { JwtType } from "@/lib/utils";
+import { IReturnUser } from '@/app/api/auth/route';
+import { authDataType, regDataType } from '@/hooks/useAuth';
+
+import { axiosInst } from './axios';
+import CONSTANTS_API from './constantsApi';
+
 export async function authEmail(
-  user: { email: string; password: string },
+  user: authDataType["email"],
   signal?: AbortSignal
 ) {
   try {
@@ -29,7 +27,7 @@ export async function authEmail(
 }
 
 export async function authPhone(
-  user: { phone: string; password: string },
+  user: authDataType["phone"],
   signal?: AbortSignal
 ) {
   try {
@@ -48,16 +46,7 @@ export async function authPhone(
   }
 }
 
-export async function registration(
-  user: {
-    fullName: string;
-    email: string;
-    phone: string;
-    password: string;
-    address: I_dadataAddress;
-  },
-  signal?: AbortSignal
-) {
+export async function registration(user: regDataType, signal?: AbortSignal) {
   try {
     const data = await axiosInst.post<IReturnUser>(
       "/" + CONSTANTS_API.auth,
@@ -94,7 +83,7 @@ export async function logout(signal?: AbortSignal) {
 
 export async function isCheckAuth(signal?: AbortSignal) {
   try {
-    const data = await axiosInst.post<User>(
+    const data = await axiosInst.post<IReturnUser>(
       "/" + CONSTANTS_API.auth,
       {},
       {

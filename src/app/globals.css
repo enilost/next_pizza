@@ -151,3 +151,54 @@ html {
   box-shadow: 0px 0px 5px 5px rgb(229 231 235 / var(--tw-bg-opacity));
   z-index: 1;
 }
+
+/*  */
+@keyframes hide_buttons {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+    display: flex;
+  }
+  50% {
+    opacity: 0.2;
+    transform: translateX(-50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%);
+    display: none;
+  }
+}
+.hide_buttons {
+  animation: hide_buttons 0.2s linear;
+  animation-iteration-count: 1;
+  display: none;
+  /* animation-fill-mode: both; */
+}
+
+@keyframes show_buttons {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+    display: flex;
+  }
+  50% {
+    opacity: 0.2;
+    transform: translateX(-50%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+    display: flex;
+  }
+}
+.show_buttons {
+  animation: show_buttons 0.2s linear;
+  animation-iteration-count: 1;
+  display: flex;
+  /* animation-fill-mode: both; */
+}
+
+#story-modal-absolute{
+background-color: rgb(148 163 184 / 0.8);
+}

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../../../prisma/prisma-client";
+import { CART_TOKEN_NAME } from "@/constants/constants";
 
-export async function updateCartItem(
+export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -9,7 +10,7 @@ export async function updateCartItem(
   try {
     const request = await req.json();
     const {quantity} = request as { quantity: number };
-    const token = req.cookies.get("cartNextPizzaToken")?.value;
+    const token = req.cookies.get(CART_TOKEN_NAME)?.value;
     if (!token) {
       return NextResponse.json(
         { message: "неудалось обновить корзину, нет токена" },
@@ -39,7 +40,7 @@ export async function updateCartItem(
 
     return NextResponse.json(userCart, { status: 200 });
   } catch (error) {
-    console.log(error);
+    console.log('api/cart/[id]',error);
     return NextResponse.json(
       { message: "неудалось обновить корзину" },
       { status: 500 }

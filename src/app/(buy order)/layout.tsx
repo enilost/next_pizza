@@ -27,7 +27,7 @@ const BuyOrderLayout: FunctionComponent<BuyOrderLayoutProps> = ({
           {children}
         </Container>
       </main>
-      <div className="modalwind relative z-20" id="modal_container"></div>
+      {/* <div className="modalwind relative z-20" id="modal_container"></div> */}
     </>
   );
 };

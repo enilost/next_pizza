@@ -6,20 +6,21 @@ import CustomInput from "../CustomInput/CustomInput";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import { useStoreUser } from "@/store/user";
 import toast from "react-hot-toast";
-import { registration } from "../../../services/auth";
+// import { registration } from "../../../services/auth";
 import { AxiosError } from "axios";
 import { IReturnUser } from "@/app/api/auth/route";
 import { useRouter } from "next/navigation";
+import useAuth from "@/hooks/useAuth";
 
 interface RegistrationProps {
-  loading: boolean;
-  setLoading: (value: boolean) => void;
+  // loading: boolean;
+  // setLoading: (value: boolean) => void;
   abortSignalref?: React.MutableRefObject<AbortController>;
 }
 
 const Registration: FunctionComponent<RegistrationProps> = ({
-  loading,
-  setLoading,
+  // loading,
+  // setLoading,
   abortSignalref,
 }) => {
   const [password, setPassword] = useState("");
@@ -28,28 +29,11 @@ const Registration: FunctionComponent<RegistrationProps> = ({
   );
 
   const Router = useRouter();
-
-  const [
-    validError,
-    setFirstName,
-    setLastName,
-    setPhone,
-    setEmail,
-    setAddress,
-    setQueryInputAddress,
-    setIsAuth
-  ] = useStoreWithEqualityFn(
+  const formRef = useRef<HTMLFormElement>(null);
+  const { registration, loading } = useAuth();
+  const [validError] = useStoreWithEqualityFn(
     useStoreUser,
-    (state) => [
-      state.validError,
-      state.setFirstName,
-      state.setLastName,
-      state.setPhone,
-      state.setEmail,
-      state.setAddress,
-      state.setQueryInputAddress,
-      state.setIsAuth
-    ],
+    (state) => [state.validError],
     (prev, next) => true
   );
   const handlePassword = (e: ChangeEvent<HTMLInputElement>) => {
@@ -93,80 +77,47 @@ const Registration: FunctionComponent<RegistrationProps> = ({
     return isError;
   };
 
-  const setUserState = (user: IReturnUser) => {
-    const [firstName, lastname] = user.fullName.split(" ");
-    setFirstName(firstName);
-    setLastName(lastname);
-    setPhone(user.phone);
-    setEmail(user.email);
-    if (user.address) {
-      const typedAddress = user.address as unknown as I_dadataAddress;
-      setAddress(typedAddress);
-      setQueryInputAddress(typedAddress.value);
-    }
-    setIsAuth(true);
-  };
   const submitForm = async () => {
     if (loading) return;
     if (validErrorAndToast()) return;
 
     try {
-      setLoading(true);
+      // setLoading(true);
       const userState = useStoreUser.getState();
       if (!userState.address) return;
       const newUser = {
         email: userState.email,
         password: password,
-        fullName: userState.firstName + " " + userState.lastName,
+        // fullName: userState.firstName + " " + userState.lastName,
+        firstName: userState.firstName,
+        lastName: userState.lastName,
         phone: userState.phone,
         address: userState.address,
       };
 
       const resUser = await registration(
-        newUser,
-        abortSignalref?.current.signal
+        newUser
+        // abortSignalref?.current.signal
       );
-      setUserState(resUser);
-      toast.success("Регистрация прошла успешно");
+      // setUserState(resUser);
+      // toast.success("Регистрация прошла успешно");
 
-      // есть ли история для шага назад
+      // есть ли история для шага назад(излишняя проверка можно удалить)
       const hasPreviousPage = window.history.length > 1;
-      // прошлая страница была на этом же сайте
-      const isSameDomain =
-        document.referrer &&
-        new URL(document.referrer).hostname === window.location.hostname;
-      // если есть история и она на этом же сайте,
+      // это происходит в модальном окне?
+      const modalWrapper = document.getElementById("modal_wrapper");
+      const isModal = modalWrapper?.contains(formRef.current);
+      // если есть история и мы в модалке, значит роут перехвачен
       // то возвращаемся на предыдущую страницу
       // иначе переходим на главную страницу
-      if (hasPreviousPage && isSameDomain) {
+      if (hasPreviousPage && isModal) {
         Router.back();
       } else {
         Router.push("/");
       }
     } catch (error) {
       console.log("Login.tsx error ", error);
-      if (error instanceof AxiosError) {
-        if (error.response) {
-          // Сервер вернул ответ со статусом, отличным от 2xx
-          toast.error(
-            error.response.data.message || `Ошибка: ${error.response.status}`
-          );
-        } else if (error.config?.signal?.aborted) {
-          // если запрос отменен абортконтроллером
-          toast.error("Запрос отменен");
-        } else if (error.request) {
-          // Запрос был сделан, но ответ не получен
-          toast.error("Сервер не отвечает. Пожалуйста, попробуйте позже.");
-        } else {
-          // Что-то пошло не так при настройке запроса
-          toast.error(`Ошибка: ${error.message}`);
-        }
-      } else {
-        // Обработка не-Axios ошибок
-        toast.error("Произошла неизвестная ошибка");
-      }
     } finally {
-      setLoading(false);
     }
   };
   return (
@@ -175,6 +126,7 @@ const Registration: FunctionComponent<RegistrationProps> = ({
         e.preventDefault();
         submitForm();
       }}
+      ref={formRef}
     >
       <DadataAddress />
       <PersonalInfo />

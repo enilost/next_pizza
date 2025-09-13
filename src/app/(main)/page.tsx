@@ -9,7 +9,7 @@ import { Suspense } from "react";
 import prisma from "@/../../prisma/prisma-client";
 import { CreatePrismaFilter, I_FILTER_PARAMS } from "@/constants/constants";
 import { Prisma } from "@prisma/client";
-
+import Stories from "@/components/Stories/Stories";
 
 export type CategoryWithProducts = Prisma.CategoryGetPayload<{
   include: {
@@ -34,21 +34,21 @@ export default async function Home({
   // console.log("filter", JSON.stringify(filter, null, 2));
   let categories: CategoryWithProducts[] = [];
   try {
-    categories = await prisma.category.findMany(filter) as  CategoryWithProducts[];
+    categories = (await prisma.category.findMany(filter)).sort(
+      (a, b) => a.id - b.id
+    ) as CategoryWithProducts[];
+    // console.log("categories", JSON.stringify(categories, null, 2));
   } catch (err) {
     console.log("(main)/page.tsx error", err);
     categories = [];
   }
-  // const user = await checkAuth();
-  // console.log("User in RootLayout:", user);
-  // console.log("categories", JSON.stringify(categories, null, 2));
 
   return (
     <>
       <Container
-      // style={{ height: "3000px" }}
       >
-        <Title size="h2" className="mt-7 font-extrabold">
+        <Stories></Stories>
+        <Title size="h2" className="mt-5 font-extrabold">
           Все пиццы
         </Title>
 
@@ -64,11 +64,11 @@ export default async function Home({
             </Suspense>
           </div>
           <div className="flex-1">
-            <div className="flex flex-col gap-16">
-              {/* {[...cats].m} */}
+            <div className="flex flex-col ">
+
               {categories.map((el, idx) => {
                 return (
-                  <div key={el.id}>
+                  <div key={el.id} className="-mb-[3px]">
                     <ProguctCardGroup
                       items={el.products}
                       title={el.name}

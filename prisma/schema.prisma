@@ -24,8 +24,8 @@ model User {
     orders           Order[]
     verificationCode VerificationCode?
 
-    phone    String @unique
-    address  Json
+    phone   String @unique
+    address Json
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -161,4 +161,21 @@ enum OrderStatus {
 enum UserRole {
     USER
     ADMIN
+}
+
+model Story {
+    id     Int    @id @default(autoincrement())
+    imgUrl String
+
+    items     StoryItem[]
+    createdAt DateTime    @default(now())
+}
+
+model StoryItem {
+    id      Int   @id @default(autoincrement())
+    storyId Int
+    story   Story @relation(fields: [storyId], references: [id])
+
+    imgUrl    String
+    createdAt DateTime @default(now())
 }

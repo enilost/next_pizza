@@ -4,9 +4,9 @@ import CommentOrderRegistration from "@/components/CommentOrderRegistration/Comm
 import DadataAddress from "@/components/DadataAddress/DadataAddress";
 import PersonalInfo from "@/components/PersonalInfo/PersonalInfo";
 import { Title } from "@/components/Title/Title";
-import { cn } from "@/lib/utils";
+import { cn, createCookie } from "@/lib/utils";
 import { MapPinHouse, MessageCircleMore, UserPen } from "lucide-react";
-import { FunctionComponent, Suspense } from "react";
+import { FunctionComponent, Suspense, use } from "react";
 import prisma from "../../../../prisma/prisma-client";
 import { ICart } from "../../../../services/cart";
 import { UserObject } from "@/store/user";
@@ -18,6 +18,7 @@ import EmailTemplate from "@/components/EmailTemplate/EmailTemplate";
 import EmailFunc, {
   createUmoneyPay,
 } from "@/components/EmailTemplate/EmailFunc";
+import { ORDER_NAME } from "@/constants/constants";
 interface CartProps {}
 
 const Cart: FunctionComponent<CartProps> = () => {
@@ -61,12 +62,13 @@ const Cart: FunctionComponent<CartProps> = () => {
         token: userCart.token,
         totalAmount: data.totalAmount,
         status: OrderStatus.PENDING,
-        items: JSON.stringify(userCart.items),
+        items:userCart.items ,//JSON.stringify(userCart.items),
         fullName: data.user.firstName + " " + data.user.lastName,
         email: data.user.email,
         phone: data.user.phone,
         address: data.user.address,
         comment: data.user.comment,
+        userId: userCart.userId,
       };
 
       const sendOrder = await prisma.order.create({
@@ -101,14 +103,17 @@ const Cart: FunctionComponent<CartProps> = () => {
       const token = crypto.randomUUID();
       const order_id = sendOrder.id;
 
-      // Устанавливаем куку с токеном, которая будет действовать час
-      // при первом заходе на страницу оплаты она будет удалена
-      cookies().set("NextPizzaOrderId", order_id + "", {
-        path: "/payment",
-        httpOnly: true,
-        maxAge: 36000, // 10часов
-        // secure: process.env.NODE_ENV === "production",
-      });
+      // Устанавливаем куку с токеном
+      // при оформлении или отмене она будет удалена
+      // cookies().set(ORDER_NAME, order_id + "", {
+      //   path: "/payment",
+      //   httpOnly: true,
+      //   maxAge: 36000, // 10часов
+      //   // secure: process.env.NODE_ENV === "production",
+      // });
+      cookies().set(
+        createCookie(ORDER_NAME, order_id + "", { path: "/payment" })
+      );
       const url = `/payment?order_id=${order_id}`;
 
       // отправляет на емейл уведомление, отключил, чтоб не заспамлять ящик
@@ -125,14 +130,14 @@ const Cart: FunctionComponent<CartProps> = () => {
 
       const orderUpdate = await prisma.order.update({
         where: {
-          id: sendOrder.id,
+          id: order_id,
         },
         data: {
           paymentId: token,
         },
       });
       if (!orderUpdate) {
-        throw new Error("Ошибка, prisma.order.update");
+        throw new Error("Ошибка, (buy order)Cart page.tsx orderUpdate");
       }
       /////////////////////////////////////////////////////////////////
       // блок для юмани я его не использую, делаю без оплаты

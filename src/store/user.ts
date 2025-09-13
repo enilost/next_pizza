@@ -47,8 +47,10 @@ interface UserStore {
   validError: () => boolean;
   createUserObject: () => UserObject;
   ///////////////////////////////////////////////////////
-  isAuth: boolean;
+  isAuth: boolean | null;
   setIsAuth: (isAuth: boolean) => void;
+  ///////////////////////////////////////////////////////
+  clear: () => void;
 }
 
 export const useStoreUser = create<UserStore>()(
@@ -125,7 +127,7 @@ export const useStoreUser = create<UserStore>()(
       comment: "",
       setComment: (comment) => set({ comment }),
       // isAuth/////////////////////////////////////////////////
-      isAuth: false,
+      isAuth: null,
       setIsAuth: (isAuth) => set({ isAuth }),
       ///////////////////////////////////////////////////////
       validError: () => {
@@ -143,7 +145,7 @@ export const useStoreUser = create<UserStore>()(
         const e = state.setValidErrorEmail();
         let a = state.validErrorAddress;
 
-        // если с инпутом даты не взаимодействовали
+        // если с инпутом адреса дадаты не взаимодействовали
         if (
           !state.address &&
           !state.validErrorAddress &&
@@ -170,7 +172,23 @@ export const useStoreUser = create<UserStore>()(
           comment: state.comment,
         };
       },
-
+      clear: () => {
+        set({
+          firstName: "",
+          validErrorFirstName: null,
+          lastName: "",
+          validErrorLastName: null,
+          phone: "",
+          validErrorPhone: null,
+          email: "",
+          validErrorEmail: null,
+          address: null,
+          queryInputAddress: "",
+          validErrorAddress: null,
+          comment: "",
+          isAuth: false,
+        });
+      }
     };
   })
 );

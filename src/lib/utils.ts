@@ -3,6 +3,8 @@ import { twMerge } from "tailwind-merge";
 import { sign, SignOptions, verify } from "jsonwebtoken";
 
 import { jwtVerify, JWTPayload } from "jose";
+import { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
+import { NextResponse } from "next/server";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -50,4 +52,41 @@ export function verifyTokenJWB(token: string, secret: string) {
     // console.error("verifyTokenJVB error:", error);
     return null;
   }
+}
+
+type cct =
+  | ResponseCookie
+  | [key: string, value: string, cookie?: Partial<ResponseCookie>];
+const initialCookie = {
+  maxAge: 60 * 60 * 24 * 7, //7 дней
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict" as const,
+  path: "/",
+};
+export function createCookie(
+  name: string,
+  value: string,
+  options?: Partial<ResponseCookie>
+) {
+  const cook: ResponseCookie = {
+    name: name,
+    value: value,
+    ...initialCookie,
+    ...options,
+  };
+  return cook;
+}
+export function deleteCookie(
+  response: NextResponse,
+  name: string,
+  options?: Partial<ResponseCookie>
+) {
+  const opt: Omit<ResponseCookie, "value" | "expires"> = {
+    name,
+    ...initialCookie,
+    ...options,
+  };
+  opt.maxAge && delete opt.maxAge;
+  response.cookies.delete(opt);
 }

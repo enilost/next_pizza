@@ -6,26 +6,26 @@ import { useRouter } from "next/navigation";
 
 interface RedirectFakePayProps {}
 
+let count = 7;
 const RedirectFakePay: FunctionComponent<RedirectFakePayProps> = () => {
-const router = useRouter();
-  let count = 7;
+  const router = useRouter();
   useEffect(() => {
-    let span = document.getElementById('countSpan');
+    let span = document.getElementById("countSpan");
     if (!span) return;
-    let intervalId = setInterval(function() {
-    count--;
-    if (span) {
-      span.textContent = count.toString();
-    }
-    if(window.location.pathname !== "/payment") {
-    clearInterval(intervalId);
-    }
-    if (count <= 0) {
-      router.replace("/");
-      clearInterval(intervalId);
-    }
-  }, 1000);
-
+    let intervalId = setInterval(function () {
+      count--;
+      if (span) {
+        span.textContent = count.toString();
+      }
+      if (window.location.pathname !== "/payment") {
+        clearInterval(intervalId);
+      }
+      if (count <= 0) {
+        router.replace("/");
+        // clearInterval(intervalId);
+      }
+    }, 1000);
+    return () => clearInterval(intervalId);
   }, []);
 
   return (

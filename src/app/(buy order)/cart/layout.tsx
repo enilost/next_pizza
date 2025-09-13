@@ -28,5 +28,5 @@ const BuyOrderCartLayout: FunctionComponent<BuyOrderLayoutProps> = ({
     </>
   );
 };
-
+ 
 export default BuyOrderCartLayout;
