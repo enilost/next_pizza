@@ -8,7 +8,9 @@ const DynamicProfile = dynamic(
   () =>
     import("@/components/Profile/Profile")
       .catch((error) => {
-        return () => <div>ошибка {error.message}</div>;
+        const ErrorDynamicProfile = () => <div>ошибка {error.message}</div>;
+        ErrorDynamicProfile.displayName = "ErrorDynamicProfile";
+        return ErrorDynamicProfile;
       }),
   {
     ssr: false,
@@ -32,5 +34,5 @@ const ProfilePage = async () => {
     </Container>
   );
 };
-
+// ProfilePage.displayName = "ProfilePage";
 export default ProfilePage;
